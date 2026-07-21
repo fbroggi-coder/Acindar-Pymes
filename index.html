@@ -1127,16 +1127,32 @@ function renderFondo() {
           <input id="flt-ticker" oninput="filtrarHoldings()" placeholder="Buscar ticker…"
             style="width:100%;box-sizing:border-box;padding:7px 10px 7px 30px;background:#1A1A20;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#E5E5E7;font-size:12px;font-family:inherit;outline:none">
         </div>
-        ${tiposUnicos.length > 0 ? `
-        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
-          <span style="color:#5A5A60;font-size:11px;font-weight:600;white-space:nowrap">Tipo:</span>
-          ${tiposUnicos.map(t => `<button class="flt-chip flt-chip-tipo" data-val="${t}" onclick="toggleFltChip(this)">${t}</button>`).join('')}
-        </div>` : ''}
-        ${catsUnicas.length > 0 ? `
-        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
-          <span style="color:#5A5A60;font-size:11px;font-weight:600;white-space:nowrap">Cat:</span>
-          ${catsUnicas.map(c => `<button class="flt-chip flt-chip-cat" data-val="${c}" onclick="toggleFltChip(this)">${c}</button>`).join('')}
-        </div>` : ''}
+        <div class="ms-wrap" id="ms-tipo-wrap">
+          <div class="ms-btn" id="ms-tipo-btn" onclick="toggleMsPanel('tipo')">
+            <span id="ms-tipo-label">Todos los tipos</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="ms-panel" id="ms-tipo-panel">
+            <div class="ms-item" onclick="toggleMsAll('tipo')">
+              <input type="checkbox" id="ms-tipo-all" checked> <span>Todos</span>
+            </div>
+            <div class="ms-sep"></div>
+            ${tiposUnicos.map(t => `<div class="ms-item" onclick="toggleMsItem(this,'tipo')"><input type="checkbox" value="${t}"> <span>${t}</span></div>`).join('')}
+          </div>
+        </div>
+        <div class="ms-wrap" id="ms-cat-wrap">
+          <div class="ms-btn" id="ms-cat-btn" onclick="toggleMsPanel('cat')">
+            <span id="ms-cat-label">Todas las categorías</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="ms-panel" id="ms-cat-panel">
+            <div class="ms-item" onclick="toggleMsAll('cat')">
+              <input type="checkbox" id="ms-cat-all" checked> <span>Todos</span>
+            </div>
+            <div class="ms-sep"></div>
+            ${catsUnicas.map(c => `<div class="ms-item" onclick="toggleMsItem(this,'cat')"><input type="checkbox" value="${c}"> <span>${c}</span></div>`).join('')}
+          </div>
+        </div>
       </div>
 
       <div class="table-wrap">
@@ -1181,15 +1197,63 @@ function renderFondo() {
 }
 
 // ── FILTRO DE HOLDINGS ───────────────────────────────────────────────
-function toggleFltChip(btn) {
-  btn.classList.toggle('active');
+function toggleMsPanel(g) {
+  const btn   = document.getElementById(`ms-${g}-btn`);
+  const panel = document.getElementById(`ms-${g}-panel`);
+  const isOpen = panel.classList.contains('open');
+  // close all panels first
+  document.querySelectorAll('.ms-panel').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.ms-btn').forEach(b => b.classList.remove('open'));
+  if (!isOpen) { panel.classList.add('open'); btn.classList.add('open'); }
+}
+
+function toggleMsAll(g) {
+  const allCb = document.getElementById(`ms-${g}-all`);
+  allCb.checked = true;
+  document.querySelectorAll(`#ms-${g}-panel .ms-item:not(:first-child) input`).forEach(cb => {
+    cb.checked = false;
+    cb.closest('.ms-item').classList.remove('checked');
+  });
+  updateMsLabel(g);
   filtrarHoldings();
 }
 
+function toggleMsItem(item, g) {
+  const cb = item.querySelector('input[type=checkbox]');
+  cb.checked = !cb.checked;
+  item.classList.toggle('checked', cb.checked);
+  // if any individual item selected, uncheck "Todos"
+  const anyChecked = [...document.querySelectorAll(`#ms-${g}-panel .ms-item:not(:first-child) input`)].some(c => c.checked);
+  document.getElementById(`ms-${g}-all`).checked = !anyChecked;
+  updateMsLabel(g);
+  filtrarHoldings();
+}
+
+function updateMsLabel(g) {
+  const selected = [...document.querySelectorAll(`#ms-${g}-panel .ms-item:not(:first-child) input:checked`)];
+  const btn = document.getElementById(`ms-${g}-btn`);
+  const label = document.getElementById(`ms-${g}-label`);
+  if (selected.length === 0) {
+    label.innerHTML = g === 'tipo' ? 'Todos los tipos' : 'Todas las categorías';
+    btn.classList.remove('has-sel');
+  } else {
+    label.innerHTML = (g === 'tipo' ? 'Tipo' : 'Cat') + ` <span class="ms-badge">${selected.length}</span>`;
+    btn.classList.add('has-sel');
+  }
+}
+
+// Close panels when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.ms-wrap')) {
+    document.querySelectorAll('.ms-panel').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.ms-btn').forEach(b => b.classList.remove('open'));
+  }
+});
+
 function filtrarHoldings() {
-  const ticker     = (document.getElementById('flt-ticker')?.value || '').toLowerCase().trim();
-  const tiposActivos = new Set([...document.querySelectorAll('.flt-chip-tipo.active')].map(b => b.dataset.val));
-  const catsActivas  = new Set([...document.querySelectorAll('.flt-chip-cat.active')].map(b => b.dataset.val));
+  const ticker = (document.getElementById('flt-ticker')?.value || '').toLowerCase().trim();
+  const tiposActivos = new Set([...document.querySelectorAll('#ms-tipo-panel .ms-item:not(:first-child) input:checked')].map(c => c.value));
+  const catsActivas  = new Set([...document.querySelectorAll('#ms-cat-panel .ms-item:not(:first-child) input:checked')].map(c => c.value));
   document.querySelectorAll('tr.holding-row').forEach(tr => {
     const okTicker = !ticker || tr.dataset.ticker.includes(ticker);
     const okTipo   = tiposActivos.size === 0 || tiposActivos.has(tr.dataset.tipo);
