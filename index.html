@@ -1355,13 +1355,27 @@ async function parsePDF(arrayBuffer) {
   const fechaM = fullText.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
   if (fechaM) res.fecha = fechaM[1];
 
-  // NAV cierre: primera línea "Valor del Día" (Clase B viene primero)
-  const valorDiaLine = lines.find(l => /valor del d[íi]a/i.test(l.text));
-  if (valorDiaLine) {
-    const navNums = [...valorDiaLine.text.matchAll(numPat)].map(m => parseArNum(m[0])).filter(n => n > 0);
-    if (navNums.length) {
-      res.navCierre = navNums[navNums.length - 1];
-      console.log('[PDF] NAV cierre:', res.navCierre);
+  // NAV cierre: buscar Clase B específicamente (este fondo sólo usa Clase B)
+  const clBIdx = lines.findIndex(l => /^Clase B$/i.test(l.text.trim()));
+  if (clBIdx >= 0) {
+    const valorLine = lines.slice(clBIdx + 1, clBIdx + 10).find(l => /valor del d[íi]a/i.test(l.text));
+    if (valorLine) {
+      const navNums = [...valorLine.text.matchAll(numPat)].map(m => parseArNum(m[0])).filter(n => n > 0);
+      if (navNums.length) {
+        res.navCierre = navNums[navNums.length - 1];
+        console.log('[PDF] NAV cierre (Clase B):', res.navCierre);
+      }
+    }
+  }
+  // Fallback: primera línea "Valor del Día"
+  if (!res.navCierre) {
+    const valorDiaLine = lines.find(l => /valor del d[íi]a/i.test(l.text));
+    if (valorDiaLine) {
+      const navNums = [...valorDiaLine.text.matchAll(numPat)].map(m => parseArNum(m[0])).filter(n => n > 0);
+      if (navNums.length) {
+        res.navCierre = navNums[navNums.length - 1];
+        console.log('[PDF] NAV cierre (fallback):', res.navCierre);
+      }
     }
   }
 
@@ -1400,6 +1414,7 @@ async function parsePDF(arrayBuffer) {
     { key: '(−) Caución tomadora',         pat: 'CAUCION TOMADORA',       sign: -1 },
     { key: '(−) Acreedores',               pat: 'ACREEDORES',             sign: -1 },
     { key: '(−) Honorarios a pagar',       pat: 'HONORARIOS A PAGAR',     sign: -1 },
+    { key: '(−) Rentas a cobrar',           pat: 'RENTAS A COBRAR',         sign: -1 },
   ];
   for (const { key, pat, sign } of ajSpec) {
     const line = lines.find(l => norm(l.text).includes(pat));
