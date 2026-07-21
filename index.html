@@ -372,9 +372,7 @@ const FUENTE_KIND = {
   'data912_us_stocks':     'usMarket',
   'data912_us_adrs':       'usMarket',
   'calculo MM usd':        'mmUsd',
-  'calculo devengamiento': 'devengo',
   'calculo MM ars':        'mmArs',
-  'devengamiento ARS':     'devengoARS',
   'globo':                 'hold',
   'hold':                  'hold',
   'yahoo':                 'yahoo',
@@ -1753,8 +1751,8 @@ function showActivosCMS(nuevos, denomMap) {
     'Soberano DL','Soberano HD','Tamar','Tasa Fija ARS','Venta Call',
   ];
   const CATEGORIA_LISTA = [
-    'CER','Commodities','Compra Call','Covered Call','Dual Tamar/CER','Equity','Futuro de Dólar','Liquidez',
-    'Renta Fija','Short Equity','Short Renta Fija','Tamar','Tasa Fija ARS','Venta Call',
+    'Commodities','Compra Call','Covered Call','Equity','Futuro de Dólar','Liquidez',
+    'Renta Fija','Short Equity','Short Renta Fija','Venta Call',
   ];
   const FUENTE_LISTA = Object.keys(FUENTE_KIND);
 
@@ -2144,7 +2142,7 @@ async function abrirEditarActivo(ticker) {
   } catch(e) {}
 
   const TIPO_LISTA_ED = ['Caución ARS', 'Caución USD', 'CER', 'Commodities', 'Compra Call', 'Covered Call', 'Dual Tamar/CER', 'Equity Argentina', 'Equity USA', 'Futuro de Dólar', 'Money Market ARS', 'Money Market USD', 'ON DL', 'ON HD', 'Otros', 'Pagare ARS', 'Pagare USD', 'Short Equity', 'Short Renta Fija', 'Soberano DL', 'Soberano HD', 'Tamar', 'Tasa Fija ARS', 'Venta Call'];
-  const CAT_LISTA_ED  = ['CER', 'Commodities', 'Compra Call', 'Covered Call', 'Dual Tamar/CER', 'Equity', 'Futuro de Dólar', 'Liquidez', 'Renta Fija', 'Short Equity', 'Short Renta Fija', 'Tamar', 'Tasa Fija ARS', 'Venta Call'];
+  const CAT_LISTA_ED  = ['Commodities', 'Compra Call', 'Covered Call', 'Equity', 'Futuro de Dólar', 'Liquidez', 'Renta Fija', 'Short Equity', 'Short Renta Fija', 'Venta Call'];
   const FUENTE_LISTA_ED = Object.keys(FUENTE_KIND);
 
   const tipoOpts = TIPO_LISTA_ED.map(t => `<option value="${t}" ${t===a.tipo_activo?'selected':''}>${t}</option>`).join('');
