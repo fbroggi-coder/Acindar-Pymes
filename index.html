@@ -1,0 +1,2245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FCI Acindar Pymes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0A0A0B;
+    color: #fff;
+    font-family: 'Manrope', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 64px;
+  }
+
+  ::selection { background: #38BDF8; color: #0A0A0B; }
+
+  /* ── UTILITY ── */
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .num  { text-align: right; font-family: 'JetBrains Mono', monospace; }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 40px;
+    max-width: 1320px;
+    margin: 0 auto;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .logo {
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: #38BDF8; }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    color: #D4D4D8;
+    padding: 8px 15px;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.12); }
+
+  .live-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #D4D4D8;
+  }
+  .live-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #38BDF8;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: .35; transform: scale(.8); }
+  }
+
+  /* ── FUND DETAIL ── */
+  .fund-page { max-width: 1320px; margin: 0 auto; padding: 0 40px; }
+
+  .fund-hero {
+    border-left: 4px solid var(--accent);
+    padding: 24px 28px;
+    background: #111113;
+    border-radius: 12px;
+    margin-bottom: 28px;
+  }
+  .fund-hero-name { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 18px; }
+  .fund-hero-metrics { display: flex; gap: 40px; flex-wrap: wrap; }
+
+  .metric-label { font-size: 11px; color: #5A5A60; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .metric-value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; }
+  .metric-value.lg { font-size: 22px; }
+  .fund-date { font-size: 12px; color: #5A5A60; font-weight: 500; margin-top: 12px; }
+
+  /* ── HOLDINGS TABLE ── */
+  .table-wrap {
+    background: #111113;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    overflow-x: auto;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+  thead tr {
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  thead th {
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #5A5A60;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+  td { padding: 11px 16px; vertical-align: middle; white-space: nowrap; }
+
+  .ticker-chip {
+    display: inline-block;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .denom-cell { color: #9A9AA0; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .badge-live  { background: #0A2A3A; color: #38BDF8; border: 1px solid rgba(56,189,248,0.3); }
+  .badge-hold  { background: rgba(255,255,255,0.06); color: #9A9AA0; border: 1px solid rgba(255,255,255,0.10); }
+
+  .moneda-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* ── TOTAL ROW ── */
+  .total-row td { border-top: 1px solid rgba(255,255,255,0.12) !important; font-weight: 700; padding-top: 14px; }
+
+  /* ── LOADING / ERROR ── */
+  .center-msg {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 12px;
+    color: #5A5A60;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .spinner {
+    width: 24px; height: 24px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-top-color: #38BDF8;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 700px) {
+    .topbar, .fund-page { padding-left: 16px; padding-right: 16px; }
+    .fund-hero-metrics { gap: 20px; }
+  }
+
+  /* ── MODAL SYSTEM ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.78);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .modal-box {
+    background: #111113;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 620px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  }
+  .modal-wide { max-width: 980px; }
+  .modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0;
+  }
+  .modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .modal-footer {
+    padding: 14px 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .btn-primary {
+    background: #38BDF8;
+    color: #0A0A0B;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-secondary {
+    background: rgba(255,255,255,0.06);
+    color: #D4D4D8;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-secondary:hover { background: rgba(255,255,255,0.10); }
+
+  /* CMS table */
+  .cms-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .cms-table th {
+    padding: 8px 6px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    color: #5A5A60;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .cms-table td { padding: 8px 6px; vertical-align: middle; }
+  .cms-input {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 6px;
+    color: #fff;
+    font-family: 'Manrope', sans-serif;
+    font-size: 12px;
+    padding: 5px 8px;
+    width: 100%;
+    min-width: 70px;
+  }
+  .cms-input:focus { outline: none; border-color: #38BDF8; }
+  .cms-select {
+    background: #18181B;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 6px;
+    color: #fff;
+    font-family: 'Manrope', sans-serif;
+    font-size: 11px;
+    padding: 5px 6px;
+    width: 100%;
+  }
+  .cms-select:focus { outline: none; border-color: #38BDF8; }
+
+  /* Upload button */
+  .upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #D4D4D8;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+  .upload-btn:hover { background: rgba(255,255,255,0.10); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<input type="file" id="pdf-input" accept=".pdf" style="display:none" onchange="handlePDFUpload(this.files[0])">
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════════
+// CONFIGURACIÓN — FCI Acindar Pymes (fondo único, ARS)
+// Misma base Supabase que la app iEB FCIs, con tablas propias.
+// ═══════════════════════════════════════════════════════════════════
+
+const SB_URL = 'https://xyoxonwufbrorwsoyyce.supabase.co/rest/v1';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5b3hvbnd1ZmJyb3J3c295eWNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MjA4OTUsImV4cCI6MjA5NzI5Njg5NX0.b7uBEOnBMK9VjD_AuRaiNSv1IOh2_gVO72ybk9OL5KM';
+const SB_HDR = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+
+const FUND_ID    = 'ACINDAR_PYMES';
+const T_FUNDS    = 'funds_ap';
+const T_HOLDINGS = 'holdings_ap';
+const T_ACTIVOS  = 'activos_ap';
+const T_CORTES   = 'cortes_cupon_ap';
+
+// El PDF expresa los valores de cuotaparte en miles → NAV × 1000
+const NAV_FACTOR = 1000;
+
+// Ajustes contables (se cargan desde funds_ns.ajustes; fallback vacío)
+let AJUSTES = [];
+
+// Config del fondo (se construye en init() desde funds_ns)
+let FUND = null;
+
+// ═══════════════════════════════════════════════════════════════════
+// LÓGICA DE PRECIOS — idéntica a la app iEB (genérica ARS/USD)
+// ═══════════════════════════════════════════════════════════════════
+
+const FUENTE_KIND = {
+  'data912_arg_bonds':     'market',
+  'data912_arg_corp':      'market',
+  'data912_arg_notes':     'market',
+  'data912_arg_stocks':    'market',
+  'data912_arg_cedears':   'market',
+  'data912_arg_options':   'market',
+  'data912_us_stocks':     'usMarket',
+  'data912_us_adrs':       'usMarket',
+  'calculo MM usd':        'mmUsd',
+  'calculo devengamiento': 'devengo',
+  'calculo MM ars':        'mmArs',
+  'devengamiento ARS':     'devengoARS',
+  'globo':                 'hold',
+  'hold':                  'hold',
+  'yahoo':                 'yahoo',
+};
+
+// Días hábiles hasta liquidación (para devengamiento)
+function nextBizDays() {
+  const ar = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
+  const hour = ar.getHours();
+  let d = new Date(ar);
+  if (hour >= 18) d.setDate(d.getDate() + 1);
+  const dow = d.getDay();
+  if (dow === 6) return 3;
+  if (dow === 0) return 2;
+  return 1;
+}
+
+function calcPrecio(h, meta, fondoMoneda, fxLive, fxAyer, marketMap, usMap, canje, yahooMap) {
+  const kind   = meta?.kind   || 'hold';
+  const tipo   = meta?.tipo   || '';
+  const tasa   = meta?.tasa   ?? null;
+  const lamina = meta?.lamina || 1;
+  const sym    = meta?.liveSymbol || h.ticker;
+  const fxNow  = fxLive || fxAyer || 0;
+  const fxB    = fxAyer || fxNow;
+  const n      = nextBizDays();
+  const base   = h.cierre * lamina;
+
+  // ── MERCADO LOCAL (bonos AR, letras, CEDEARs, acciones AR, opciones) ─
+  if (kind === 'market') {
+    const raw  = marketMap?.[sym];
+    let liveP  = null;
+    if (raw && raw.c > 0) {
+      if (fondoMoneda === 'USD') {
+        liveP = raw.c;
+      } else if (base > 0) {
+        // Fondo ARS: ambos en ARS, validar escala con candidatos ×1 / ÷100 / ×100
+        const cands = [raw.c, raw.c / 100, raw.c * 100];
+        const best  = cands.reduce((a, b) =>
+          Math.abs(Math.log(b / base)) < Math.abs(Math.log(a / base)) ? b : a
+        );
+        liveP = Math.abs(best / base - 1) <= 0.40 ? best : null;
+      }
+    }
+    const priceARS = liveP ?? base;
+    const live     = liveP != null;
+    if (fondoMoneda === 'USD') {
+      if (tipo.includes('HD'))
+        return { price: priceARS, live };
+      if (!live) return { price: base, live: false };
+      return { price: fxNow > 0 ? priceARS / fxNow : base, live: fxNow > 0 };
+    }
+    return { price: priceARS, live };
+  }
+
+  // ── ACCIONES / ADRs USA (precio en USD cable) ────────────────────
+  if (kind === 'usMarket') {
+    const raw = usMap?.[sym];
+    if (raw && raw.c > 0 && raw.v > 0) {
+      const priceUSD = raw.c;
+      if (fondoMoneda === 'USD')
+        return { price: canje > 0 ? priceUSD * canje : priceUSD, live: canje > 0 };
+      return { price: priceUSD * fxNow * canje, live: fxNow > 0 };
+    }
+    return { price: base, live: false };
+  }
+
+  // ── MONEY MARKET USD / Pagaré USD (devenga en USD) ───────────────
+  if (kind === 'mmUsd') {
+    if (tasa == null) return { price: base, live: false };
+    const devengado = base * (1 + tasa / 100 / 365 * n);
+    if (fondoMoneda === 'USD')
+      return { price: devengado, live: true };
+    if (fxB > 0)
+      return { price: devengado * (fxNow / fxB), live: fxNow > 0 };
+    return { price: devengado, live: true };
+  }
+
+  // ── DEVENGAMIENTO USD (legacy) ────────────────────────────────────
+  if (kind === 'devengo') {
+    if (tasa == null) return { price: base, live: false };
+    const devengado = base * (1 + tasa / 100 / 365 * n);
+    if (fondoMoneda === 'USD')
+      return { price: devengado, live: true };
+    if (fxB > 0)
+      return { price: devengado * (fxNow / fxB), live: fxNow > 0 };
+    return { price: devengado, live: true };
+  }
+
+  // ── MONEY MARKET ARS / Pagaré ARS (devenga en ARS) ──────────────
+  if (kind === 'mmArs') {
+    if (tasa == null) return { price: base, live: false };
+    const devengado = base * (1 + tasa / 100 / 365 * n);
+    if (fondoMoneda === 'ARS')
+      return { price: devengado, live: true };
+    if (fxNow > 0 && fxB > 0)
+      return { price: devengado * fxB / fxNow, live: true };
+    if (fxNow > 0)
+      return { price: devengado / fxNow, live: true };
+    return { price: base, live: false };
+  }
+
+  // ── DEVENGAMIENTO ARS puro ───────────────────────────────────────
+  if (kind === 'devengoARS') {
+    if (tasa == null) return { price: base, live: false };
+    const devengado = base * (1 + tasa / 100 / 365 * n);
+    if (fondoMoneda === 'ARS')
+      return { price: devengado, live: true };
+    if (fxNow > 0)
+      return { price: devengado / fxNow, live: true };
+    return { price: base, live: false };
+  }
+
+  // ── YAHOO FINANCE ────────────────────────────────────────────────
+  if (kind === 'yahoo') {
+    const yPrice = yahooMap?.[sym];
+    if (yPrice > 0) {
+      return { price: canje > 0 ? yPrice * canje : yPrice, live: true };
+    }
+    return { price: base, live: false };
+  }
+
+  // ── HOLD / fallback ──────────────────────────────────────────────
+  return { price: base, live: false };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CORTES DE CUPÓN
+// ═══════════════════════════════════════════════════════════════════
+
+function getHoldingsConCortes() {
+  const holdings = state.holdings || [];
+  const cortes   = state.cortesCupon || [];
+  const moneda   = FUND?.moneda || 'ARS';
+  const mep      = state.fxLive || state.fxAyer || 0;
+
+  const synth = cortes.map(c => {
+    let cierre;
+    if (c.moneda === moneda)                          cierre = c.monto;
+    else if (moneda === 'ARS' && c.moneda === 'USD') cierre = mep > 0 ? c.monto * mep : c.monto;
+    else if (moneda === 'USD' && c.moneda === 'ARS') cierre = mep > 0 ? c.monto / mep : c.monto;
+    else                                              cierre = c.monto;
+    return { ticker: `CUPON_${c.id}`, cantidad: 1, cierre, _esCupon: true, _corte: c };
+  });
+  return [...holdings, ...synth];
+}
+
+function injectCorteMeta() {
+  const cortes = state.cortesCupon || [];
+  for (const c of cortes) {
+    state.meta[`CUPON_${c.id}`] = {
+      denom: c.descripcion || 'Corte de cupón',
+      tipo:  'Corte de Cupón',
+      moneda: FUND?.moneda || 'ARS',
+      fuente: 'hold', kind: 'hold', liveSymbol: null,
+      tasa: null, lamina: 1, precioInicial: null,
+    };
+  }
+}
+
+async function cargarCortesCupon() {
+  const hoy = new Date().toISOString().split('T')[0];
+  try {
+    const rows = await sbGet(`/${T_CORTES}?fecha=eq.${hoy}&select=id,fund_id,fecha,monto,moneda,descripcion&order=id.asc`);
+    state.cortesCupon = rows;
+  } catch(e) {
+    console.warn('[AP] cortes_cupon no disponible:', e.message);
+    state.cortesCupon = [];
+  }
+  injectCorteMeta();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CÁLCULO DE NAV
+// ═══════════════════════════════════════════════════════════════════
+
+function calcNAV() {
+  if (!FUND) return { totalInv: 0, ajusteSum: 0, pnBruto: 0, honorario: 0, pn: 0, navLive: 0, rend: 0 };
+  const holdings = getHoldingsConCortes();
+  const meta     = state.meta || {};
+  const moneda   = FUND.moneda || 'ARS';
+  let totalInv   = 0;
+
+  for (const h of holdings) {
+    const m = meta[h.ticker];
+    if (m?.tipo === 'Futuro de Dólar') continue;
+    const { price } = calcPrecio(h, m, moneda, state.fxLive, state.fxAyer, state.marketMap, state.usMap, state.canje, state.yahooMap);
+    const lamina = m?.lamina || 1;
+    const montoH = h.cantidad * (price / lamina);
+    const isShortCallH = ['Covered Call', 'Venta Call'].includes(m?.tipo);
+    totalInv += isShortCallH ? -Math.abs(montoH) : montoH;
+  }
+
+  const ajusteSum = AJUSTES.reduce((s, a) => s + a.val, 0);
+  const pnBruto   = totalInv + ajusteSum;
+  const honorario = pnBruto * (FUND.feeAnual || 0) / 365;
+  const pn        = pnBruto - honorario;
+  const navLive   = FUND.cuotapartes > 0 ? (pn / FUND.cuotapartes) * NAV_FACTOR : 0;
+  const rend      = FUND.navCierre   > 0 ? navLive / FUND.navCierre - 1 : 0;
+
+  return { totalInv, ajusteSum, pnBruto, honorario, pn, navLive, rend };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CARGA DE DATOS
+// ═══════════════════════════════════════════════════════════════════
+
+async function sbGet(path) {
+  const r = await fetch(SB_URL + path, { headers: SB_HDR });
+  if (!r.ok) throw new Error('Supabase ' + r.status + ': ' + path);
+  return r.json();
+}
+
+async function cargarFund() {
+  const rows = await sbGet(`/${T_FUNDS}?id=eq.${FUND_ID}&select=id,nombre,moneda,color,cuotapartes,nav_cierre,pn_cierre,fee_anual,pdf_date,ajustes`);
+  if (!rows.length) throw new Error(`Fondo ${FUND_ID} no encontrado en ${T_FUNDS}. ¿Corriste el SQL de setup?`);
+  const r = rows[0];
+  if (Array.isArray(r.ajustes) && r.ajustes.length > 0) AJUSTES = r.ajustes;
+  return {
+    id:          r.id,
+    nombre:      r.nombre,
+    moneda:      r.moneda || 'ARS',
+    color:       r.color  || '#38BDF8',
+    cuotapartes: parseFloat(r.cuotapartes) || 0,
+    navCierre:   parseFloat(r.nav_cierre)  || 0,
+    pnCierre:    parseFloat(r.pn_cierre)   || 0,
+    feeAnual:    parseFloat(r.fee_anual)   || 0.012,
+    pdfDate:     r.pdf_date || '',
+  };
+}
+
+async function cargarMeta() {
+  try {
+    let rows;
+    try {
+      rows = await sbGet(`/${T_ACTIVOS}?select=ticker,nombre,tipo_activo,categoria,moneda,fuente_precio,live_symbol,tasa,lamina,base,precio_inicial`);
+    } catch(e1) {
+      rows = await sbGet(`/${T_ACTIVOS}?select=ticker,nombre,tipo_activo,categoria,moneda,fuente_precio,live_symbol,tasa,lamina,base`);
+    }
+    const meta = {};
+    for (const r of rows) {
+      const fuente = r.fuente_precio || 'hold';
+      const kind   = FUENTE_KIND[fuente] || 'hold';
+      const entry  = {
+        denom:      r.nombre     || r.ticker,
+        tipo:       r.tipo_activo || 'Otros',
+        categoria:  r.categoria  || '',
+        moneda:     r.moneda     || 'ARS',
+        fuente,
+        kind,
+        liveSymbol: r.live_symbol || r.ticker,
+        tasa:       r.tasa   != null ? parseFloat(r.tasa)   : null,
+        lamina:     r.lamina != null ? parseFloat(r.lamina)
+                                    : (fuente.startsWith('data912') ? 100 : 1),
+        base:          r.base           != null ? parseFloat(r.base)           : 0,
+        precioInicial: r.precio_inicial != null ? parseFloat(r.precio_inicial) : null,
+      };
+      meta[r.ticker] = entry;
+      if (r.live_symbol && r.live_symbol !== r.ticker) meta[r.live_symbol] = entry;
+    }
+    return meta;
+  } catch (e) {
+    console.warn(`[AP] No se pudo cargar ${T_ACTIVOS}:`, e.message);
+    return {};
+  }
+}
+
+async function cargarHoldings() {
+  try {
+    const rows = await sbGet(`/${T_HOLDINGS}?fund_id=eq.${FUND_ID}&select=ticker,cantidad,cierre&order=ticker.asc`);
+    return rows.map(r => ({
+      ticker:   r.ticker,
+      cantidad: parseFloat(r.cantidad),
+      cierre:   parseFloat(r.cierre),
+    }));
+  } catch (e) {
+    console.warn('[AP] cargarHoldings error:', e.message);
+    return [];
+  }
+}
+
+async function cargarFxAyer() {
+  try {
+    const hoy = new Date().toISOString().slice(0, 10);
+    const rows = await sbGet('/fx_history?fecha=lt.' + hoy + '&order=fecha.desc&limit=1');
+    if (rows.length > 0) return { mep: parseFloat(rows[0].mep) || 0, ccl: parseFloat(rows[0].ccl) || 0 };
+    return { mep: 0, ccl: 0 };
+  } catch (e) {
+    console.warn('[AP] cargarFxAyer error:', e.message);
+    return { mep: 0, ccl: 0 };
+  }
+}
+
+async function actualizarPrecios() {
+  if (state.updatingPrices) return;
+  state.updatingPrices = true;
+  render();
+  try {
+    const live = await fetchLivePrecios();
+    state.fxLive          = live.fxLive;
+    state.canje           = live.canje;
+    state.marketMap       = live.marketMap;
+    state.usMap           = live.usMap;
+    state.yahooMap        = live.yahooMap || {};
+    state.lastPriceUpdate = new Date();
+  } finally {
+    state.updatingPrices = false;
+    render();
+  }
+}
+
+async function fetchLivePrecios() {
+  try {
+    const [bonds, corp, notes, mepArr, cclArr, cedears, options, stocks] = await Promise.all([
+      fetch('https://data912.com/live/arg_bonds').then(r => r.json()).catch(() => []),
+      fetch('https://data912.com/live/arg_corp').then(r => r.json()).catch(() => []),
+      fetch('https://data912.com/live/arg_notes').then(r => r.json()).catch(() => []),
+      fetch('https://data912.com/live/mep').then(r => r.json()).catch(() => []),
+      fetch('https://data912.com/live/ccl').then(r => r.json()).catch(() => []),
+      fetch('https://data912.com/live/arg_cedears').then(r => r.json()).catch(() => []),
+      fetch('https://data912.com/live/arg_options').then(r => r.json()).catch(() => []),
+      fetch('https://data912.com/live/arg_stocks').then(r => r.json()).catch(() => []),
+    ]);
+
+    const marketMap = {};
+    for (const arr of [bonds, corp, notes, cedears, options, stocks]) {
+      for (const o of (arr || [])) {
+        if (o && o.symbol) marketMap[o.symbol] = o;
+      }
+    }
+
+    // MEP y CCL
+    const mepMap = {}, cclMap = {};
+    for (const o of (mepArr || [])) { if (o && o.ticker) mepMap[o.ticker] = o; }
+    for (const o of (cclArr || [])) { if (o && o.ticker_ar) cclMap[o.ticker_ar] = o; }
+
+    const mepRow = mepMap['AL30'] || mepMap['GD30'] || mepMap['AL30D'];
+    const CCL_TICKERS = ['GGAL', 'YPFD', 'BMA'];
+    const cclValues = CCL_TICKERS.map(t => cclMap[t]?.CCL_close || 0).filter(v => v > 0);
+    const fxLive  = mepRow ? (mepRow.mark || mepRow.close || 0) : 0;
+    const fxCCL   = cclValues.length > 0 ? cclValues.reduce((a, b) => a + b, 0) / cclValues.length : 0;
+    const canje   = fxLive > 0 && fxCCL > 0 ? fxCCL / fxLive : 1;
+
+    // USA stocks (por si se agregan instrumentos usMarket en el futuro)
+    const [usStk, usAdr] = await Promise.all([
+      fetch('https://data912.com/live/usa_stocks').then(r => r.json()).catch(() => []),
+      fetch('https://data912.com/live/usa_adrs').then(r => r.json()).catch(() => []),
+    ]);
+    const usMap = {};
+    for (const arr of [usStk, usAdr]) {
+      for (const o of (arr || [])) { if (o && o.symbol) usMap[o.symbol] = o; }
+    }
+
+    // Yahoo Finance (solo si hay activos con fuente 'yahoo')
+    const yahooSymbols = [...new Set(
+      Object.values(state.meta)
+        .filter(e => e.kind === 'yahoo' && e.liveSymbol)
+        .map(e => e.liveSymbol)
+    )];
+    const yahooMap = {};
+    if (yahooSymbols.length > 0) {
+      try {
+        const yUrl = 'https://xyoxonwufbrorwsoyyce.supabase.co/functions/v1/yahoo-prices';
+        const yData = await fetch(yUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY },
+          body: JSON.stringify({ symbols: yahooSymbols }),
+        }).then(r => r.json()).catch(() => null);
+        if (yData?.quoteResponse?.result) {
+          for (const q of yData.quoteResponse.result) {
+            if (q.symbol && q.regularMarketPrice > 0) yahooMap[q.symbol] = q.regularMarketPrice;
+          }
+        }
+      } catch(e) {
+        console.warn('[AP] Yahoo Finance error:', e);
+      }
+    }
+
+    return { fxLive, canje, marketMap, usMap, yahooMap };
+  } catch (e) {
+    console.warn('[AP] fetchLivePrecios error:', e);
+    return { fxLive: 0, canje: 1, marketMap: {}, usMap: {}, yahooMap: {} };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════════════════
+
+const state = {
+  view:      'fund',  // 'fund' | 'activos'
+  meta:      {},
+  holdings:  [],
+  marketMap: {},
+  usMap:     {},
+  fxLive:    0,
+  fxAyer:    0,
+  fxAyerCCL: 0,
+  canje:     1,
+  loading:   true,
+  error:     null,
+  lastPriceUpdate: null,
+  updatingPrices:  false,
+  breakdown:       null,  // null | 'moneda' | 'tipo' | 'cat'
+  yahooMap:        {},
+  cortesCupon:     [],
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// FORMATO
+// ═══════════════════════════════════════════════════════════════════
+
+const _ar2 = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const _ar4 = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+const _ar0 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
+const _arN = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
+
+const f2   = n => _ar2.format(n);
+const f4   = n => _ar4.format(n);
+const fARS = n => '$ ' + _ar0.format(Math.round(n));
+const fNum = n => _arN.format(n);
+const fPct = n => {
+  if (Math.abs(n) < 5e-5) n = 0;
+  return (n > 0 ? '+' : '') + _ar2.format(n * 100) + '%';
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════════
+
+const TIPO_COLORS = {
+  'Bono Soberano': '#A6E635', 'Letra': '#7C3AED', 'Letra CER': '#2DD4BF',
+  'Bono': '#6366F1', 'Bono TAMAR': '#F59E0B', 'Bono Dual': '#D6249F',
+  'Bono CER': '#FB7185', 'ON Corporativa': '#38BDF8',
+  'FCI MM USD': '#22D3EE', 'FCI MM ARS': '#34D399',
+  'Fideicomiso': '#F472B6', 'Pagaré HD': '#22D3EE',
+  'Money Market USD': '#22D3EE', 'Money Market ARS': '#34D399',
+  'Tasa Fija ARS': '#38BDF8', 'CER': '#2DD4BF', 'Tamar': '#F59E0B',
+  'Dual Tamar/CER': '#A78BFA', 'Otros': '#94A3B8',
+};
+
+function dotColor(tipo) {
+  return TIPO_COLORS[tipo] || '#94A3B8';
+}
+
+function render() {
+  const root = document.getElementById('app');
+  if (state.loading) {
+    root.innerHTML = `<div class="center-msg"><div class="spinner"></div><span>Cargando datos…</span></div>`;
+    return;
+  }
+  if (state.error) {
+    root.innerHTML = `<div class="center-msg"><span style="color:#D33A3F">Error: ${state.error}</span></div>`;
+    return;
+  }
+  if (state.view === 'activos') {
+    root.innerHTML = renderActivosPage();
+    bindEvents();
+    cargarActivosTabla();
+    return;
+  }
+  root.innerHTML = renderFondo();
+  bindEvents();
+}
+
+// ── TOPBAR ──────────────────────────────────────────────────────────
+function renderTopBar() {
+  const mep = state.fxLive || state.fxAyer;
+  const mepTxt = mep > 0 ? `MEP ${f2(mep)}` : 'MEP —';
+  return `
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="logo">FCI <span>Nación Seguros</span></div>
+      </div>
+      <div class="live-pill">
+        <div class="live-dot"></div>
+        Valuación en vivo · <span class="mono">${mepTxt}</span>
+      </div>
+    </div>`;
+}
+
+// ── MONTOS DE CARTERA ────────────────────────────────────────────────
+function calcMontosCartera() {
+  const holdings = getHoldingsConCortes();
+  const moneda   = FUND?.moneda || 'ARS';
+
+  return holdings.map(h => {
+    const meta   = state.meta[h.ticker];
+    const { price } = calcPrecio(h, meta, moneda, state.fxLive, state.fxAyer, state.marketMap, state.usMap, state.canje, state.yahooMap);
+    const lamina  = meta?.lamina || 1;
+    const monto   = h.cantidad * (price / lamina);
+    const tipo    = meta?.tipo || 'Otros';
+    const isShortCall = ['Covered Call', 'Venta Call'].includes(tipo);
+    const montoTabla = isShortCall ? -Math.abs(monto) : monto;
+    return { ticker: h.ticker, meta, tipo, monto, montoDisplay: monto, montoTabla };
+  });
+}
+
+// ── BREAKDOWN ────────────────────────────────────────────────────────
+function toggleBreakdown(mode) {
+  state.breakdown = state.breakdown === mode ? null : mode;
+  render();
+}
+
+function renderBreakdownPanel() {
+  const mode = state.breakdown;
+  if (!mode) return '';
+
+  const { pn, totalInv } = calcNAV();
+  if (pn <= 0) return '';
+
+  const rawItems = calcMontosCartera();
+  const items = rawItems.map(i => ({
+    tipo:        i.meta?.tipo      || 'Otros',
+    cat:         i.meta?.categoria || 'Sin categoría',
+    monedaInstr: i.meta?.moneda    || 'ARS',
+    monto:       i.montoDisplay,
+  }));
+
+  const liquidez    = pn - totalInv;
+  const fondoMoneda = FUND?.moneda || 'ARS';
+
+  const groups = {};
+
+  if (mode === 'moneda') {
+    for (const it of items) {
+      if (it.tipo === 'Futuro de Dólar') {
+        groups['ARS'] = (groups['ARS'] || 0) - it.monto;
+        groups['USD'] = (groups['USD'] || 0) + it.monto;
+      } else {
+        groups[it.monedaInstr] = (groups[it.monedaInstr] || 0) + it.monto;
+      }
+    }
+    if (liquidez !== 0) groups[fondoMoneda] = (groups[fondoMoneda] || 0) + liquidez;
+
+  } else if (mode === 'tipo') {
+    for (const it of items) {
+      if (it.tipo === 'Futuro de Dólar') continue;
+      groups[it.tipo] = (groups[it.tipo] || 0) + it.monto;
+    }
+
+  } else {
+    for (const it of items) {
+      if (it.tipo === 'Futuro de Dólar') continue;
+      groups[it.cat] = (groups[it.cat] || 0) + it.monto;
+    }
+    if (liquidez !== 0) groups['Liquidez'] = (groups['Liquidez'] || 0) + liquidez;
+  }
+
+  const sorted  = Object.entries(groups).sort((a, b) => b[1] - a[1]);
+  const maxAbs  = Math.max(...sorted.map(([, v]) => Math.abs(v)), 1);
+  const COLORS  = ['#38BDF8','#7C3AED','#2DD4BF','#F59E0B','#60A5FA','#F472B6','#34D399','#FB923C','#A78BFA','#94A3B8'];
+
+  const rows = sorted.map(([label, val], i) => {
+    const pct      = val / pn * 100;
+    const barW     = Math.abs(val) / maxAbs * 100;
+    const isNeg    = val < 0;
+    const barColor = isNeg ? '#D33A3F' : COLORS[i % COLORS.length];
+    return `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div style="width:140px;font-size:12px;color:#C0C0C8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0">${label}</div>
+        <div style="flex:1;background:#1E1E26;border-radius:4px;height:10px;overflow:hidden">
+          <div style="width:${barW}%;height:100%;background:${barColor};border-radius:4px;transition:width 0.3s"></div>
+        </div>
+        <div style="width:52px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${isNeg ? '#D33A3F' : '#E5E5E7'}">${pct.toFixed(1)}%</div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div style="background:#161618;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px 20px;margin-bottom:16px">
+      <div style="font-size:10px;font-weight:700;color:#5A5A60;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:14px">
+        ${{ moneda: 'Composición por Moneda', tipo: 'Composición por Tipo de Activo', cat: 'Composición por Categoría' }[mode]}
+      </div>
+      ${rows}
+    </div>`;
+}
+
+// ── FONDO DETALLE ────────────────────────────────────────────────────
+function renderFondo() {
+  if (!FUND) return `<div class="center-msg"><span>Fondo no encontrado</span></div>`;
+  injectCorteMeta();
+  const { navLive, rend, pn, totalInv, honorario } = calcNAV();
+  const holdings  = getHoldingsConCortes();
+  const fondoMeta = state.meta || {};
+  const moneda    = FUND.moneda || 'ARS';
+  const neg = rend < -1e-5;
+  const rendColor = neg ? '#D33A3F' : '#2E9E2A'; // verde si ≥ 0, rojo si negativo
+
+  const tiposUnicos  = [...new Set(holdings.map(h => fondoMeta[h.ticker]?.tipo).filter(Boolean))].sort();
+  const catsUnicas   = [...new Set(holdings.map(h => fondoMeta[h.ticker]?.categoria).filter(Boolean))].sort();
+  const montosAjust    = calcMontosCartera();
+  const montosMap      = Object.fromEntries(montosAjust.map(i => [i.ticker, i.montoDisplay]));
+  const montosTablaMap = Object.fromEntries(montosAjust.map(i => [i.ticker, i.montoTabla]));
+
+  const rows = holdings.map(h => {
+    // ── Fila especial para Cortes de Cupón ──────────────────────────
+    if (h._esCupon) {
+      const c = h._corte;
+      const montoFondo = h.cierre;
+      const pct = pn > 0 ? (montoFondo / pn * 100).toFixed(2) + '%' : '—';
+      const montoOrig = c.moneda === moneda
+        ? ''
+        : `<span style="font-size:10px;color:#5A5A60;margin-left:4px">(${c.moneda === 'USD' ? 'USD ' : 'ARS '}${fNum(c.monto)})</span>`;
+      return `
+      <tr class="holding-row" data-ticker="cupon_${c.id}" data-tipo="Corte de Cupón" data-cat="">
+        <td><span class="ticker-chip" style="background:rgba(251,191,36,0.15);color:#F59E0B;border-color:rgba(251,191,36,0.3)">✂</span></td>
+        <td class="denom-cell">${c.descripcion || 'Corte de cupón'}${montoOrig}</td>
+        <td class="num" style="color:#9A9AA0">—</td>
+        <td class="num" style="color:#9A9AA0">—</td>
+        <td class="num" style="color:#9A9AA0">—</td>
+        <td class="num" style="color:#9A9AA0">—</td>
+        <td class="num" style="color:#9A9AA0">—</td>
+        <td class="num" style="color:#F59E0B">${fARS(montoFondo)}</td>
+        <td class="num" style="color:#9A9AA0">${pct}</td>
+        <td>
+          <button onclick="eliminarCorteCupon(${c.id})"
+            style="background:rgba(211,58,63,0.12);border:1px solid rgba(211,58,63,0.3);color:#D33A3F;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✕</button>
+        </td>
+      </tr>`;
+    }
+
+    const meta   = fondoMeta[h.ticker];
+    const instrMoneda = meta?.moneda || 'ARS';
+    const { price, live } = calcPrecio(h, meta, moneda, state.fxLive, state.fxAyer, state.marketMap, state.usMap, state.canje, state.yahooMap);
+    const lamina  = meta?.lamina || 1;
+    const cierre  = h.cierre * lamina;
+    const monto   = h.cantidad * (price / lamina);
+    const tipo    = meta?.tipo   || 'Otros';
+    const isShortCall = ['Covered Call', 'Venta Call'].includes(tipo);
+    const priceDisplay = live ? price : cierre;
+    const varPct  = live && cierre > 0
+      ? (isShortCall ? cierre / price - 1 : price / cierre - 1)
+      : 0;
+    const cat     = meta?.categoria || '';
+    const precioInicial = meta?.precioInicial ?? null;
+    const varHist = precioInicial > 0
+      ? (isShortCall ? precioInicial / priceDisplay - 1 : priceDisplay / precioInicial - 1)
+      : null;
+    const varHistColor = varHist === null ? '#9A9AA0'
+      : Math.abs(varHist) < 1e-9  ? '#9A9AA0'
+      : varHist > 0               ? '#2E9E2A' : '#D33A3F';
+    const montoDisplay = montosMap[h.ticker]      ?? monto;
+    const montoTabla   = montosTablaMap[h.ticker] ?? monto;
+    const varColor = Math.abs(varPct) < 1e-9 ? '#9A9AA0' : (varPct > 0 ? '#2E9E2A' : '#D33A3F');
+    const badge   = live
+      ? `<span class="badge badge-live">LIVE</span>`
+      : `<span class="badge badge-hold">CIERRE</span>`;
+    const monedaBg    = instrMoneda === 'USD' ? '#ECFCCB' : '#EDE9FE';
+    const monedaColor = instrMoneda === 'USD' ? '#3F6212' : '#5B21B6';
+
+    return `
+      <tr class="holding-row" data-ticker="${h.ticker.toLowerCase()}" data-tipo="${tipo}" data-cat="${cat}">
+        <td><span class="ticker-chip">${h.ticker}</span></td>
+        <td class="denom-cell">${meta?.denom || h.ticker}</td>
+        <td class="num">${fNum(h.cantidad)}</td>
+        <td class="num">${f2(cierre)}</td>
+        <td class="num">${f2(priceDisplay)} ${badge}</td>
+        <td class="num" style="color:${varColor}">${fPct(varPct)}</td>
+        <td class="num" style="color:${varHistColor}">${varHist !== null ? fPct(varHist) : '—'}</td>
+        <td class="num">${fARS(montoTabla)}</td>
+        <td class="num" style="color:#9A9AA0">${pn > 0 ? (montoDisplay / pn * 100).toFixed(2) + '%' : '—'}</td>
+        <td><span class="moneda-badge" style="background:${monedaBg};color:${monedaColor}">${instrMoneda}</span></td>
+      </tr>`;
+  }).join('');
+
+  // ── Ajustes rows ─────────────────────────────────────────────────
+  const ajusteRows = AJUSTES.map(a => `
+    <tr>
+      <td colspan="7" class="denom-cell">${a.label}</td>
+      <td class="num" style="color:${a.val >= 0 ? '#9A9AA0' : '#D33A3F'}">${fARS(a.val)}</td>
+      <td></td>
+    </tr>`).join('');
+
+  const honorarioRow = `
+    <tr>
+      <td colspan="7" class="denom-cell">(−) Honorarios devengados (1 día)</td>
+      <td class="num" style="color:#D33A3F">${fARS(-honorario)}</td>
+      <td></td>
+    </tr>`;
+
+  return `
+    ${renderTopBar()}
+    <div class="fund-page">
+      <div class="fund-hero" style="--accent:${FUND.color}">
+        <div class="fund-hero-name">${FUND.nombre}</div>
+        <div class="fund-hero-metrics">
+          <div>
+            <div class="metric-label">NAV live</div>
+            <div class="metric-value lg">${f4(navLive)}</div>
+          </div>
+          <div>
+            <div class="metric-label">NAV cierre</div>
+            <div class="metric-value">${f4(FUND.navCierre)}</div>
+          </div>
+          <div>
+            <div class="metric-label">Rendimiento</div>
+            <div class="metric-value" style="color:${rendColor}">${fPct(rend)}</div>
+          </div>
+          <div>
+            <div class="metric-label">PN live</div>
+            <div class="metric-value">${fARS(pn)}</div>
+          </div>
+          <div>
+            <div class="metric-label">Cuotapartes</div>
+            <div class="metric-value">${fNum(FUND.cuotapartes)}</div>
+          </div>
+        </div>
+        <div class="fund-date">Cierre ${FUND.pdfDate || '—'}</div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <!-- Breakdown buttons -->
+        <div style="display:flex;gap:6px">
+          ${['moneda','tipo','cat'].map((m, i) => {
+            const label = ['Moneda','Tipo de Activo','Categoría'][i];
+            const active = state.breakdown === m;
+            return `<button onclick="toggleBreakdown('${m}')"
+              style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:all 0.15s;
+                     background:${active ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.05)'};
+                     border:1px solid ${active ? 'rgba(56,189,248,0.4)' : 'rgba(255,255,255,0.08)'};
+                     color:${active ? '#38BDF8' : '#9A9AA0'}">${label}</button>`;
+          }).join('')}
+        </div>
+        <!-- Right side buttons -->
+        <div style="display:flex;gap:10px;align-items:center">
+        <button data-action="activos" class="upload-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
+          Activos
+        </button>
+        <button onclick="actualizarPrecios()" class="upload-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);${state.updatingPrices ? 'opacity:0.5;cursor:not-allowed' : ''}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="${state.updatingPrices ? 'animation:spin 1s linear infinite' : ''}"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          ${state.updatingPrices ? 'Actualizando…' : 'Actualizar precios'}
+          ${state.lastPriceUpdate ? `<span style="font-size:10px;opacity:0.5;margin-left:4px">${state.lastPriceUpdate.toLocaleTimeString('es-AR', {hour:'2-digit',minute:'2-digit'})}</span>` : ''}
+        </button>
+        <button onclick="abrirCorteCupon()" class="upload-btn" style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);color:#F59E0B">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Corte de cupón
+        </button>
+        <label for="pdf-input" class="upload-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+          Cargar PDF
+        </label>
+        </div><!-- end right buttons -->
+      </div><!-- end toolbar -->
+
+      ${renderBreakdownPanel()}
+
+      <!-- Filter bar -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+        <div style="position:relative;flex:1;min-width:160px;max-width:280px">
+          <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5A5A60" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="flt-ticker" oninput="filtrarHoldings()" placeholder="Buscar ticker…"
+            style="width:100%;box-sizing:border-box;padding:7px 10px 7px 30px;background:#1A1A20;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#E5E5E7;font-size:12px;font-family:inherit;outline:none">
+        </div>
+        <select id="flt-tipo" onchange="filtrarHoldings()"
+          style="padding:7px 10px;background:#1A1A20;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#E5E5E7;font-size:12px;font-family:inherit;outline:none;cursor:pointer">
+          <option value="">Todos los tipos</option>
+          ${tiposUnicos.map(t => `<option value="${t}">${t}</option>`).join('')}
+        </select>
+        <select id="flt-cat" onchange="filtrarHoldings()"
+          style="padding:7px 10px;background:#1A1A20;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#E5E5E7;font-size:12px;font-family:inherit;outline:none;cursor:pointer">
+          <option value="">Todas las categorías</option>
+          ${catsUnicas.map(c => `<option value="${c}">${c}</option>`).join('')}
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Instrumento</th>
+              <th class="num">Nominales</th>
+              <th class="num">Px cierre</th>
+              <th class="num">Px actual</th>
+              <th class="num">Var %</th>
+              <th class="num">Var Hist.</th>
+              <th class="num">Monto ${moneda}</th>
+              <th class="num">% Patrim.</th>
+              <th>Moneda instr.</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+
+            <!-- Subtotal cartera -->
+            <tr class="total-row">
+              <td colspan="7" style="color:#9A9AA0;font-size:12px">SUBTOTAL CARTERA</td>
+              <td class="num">${fARS(totalInv)}</td>
+              <td></td>
+            </tr>
+
+            ${ajusteRows}
+            ${honorarioRow}
+
+            <!-- PN final -->
+            <tr class="total-row">
+              <td colspan="7" style="font-size:12px;color:#38BDF8">PATRIMONIO NETO LIVE</td>
+              <td class="num" style="color:#38BDF8">${fARS(pn)}</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ── FILTRO DE HOLDINGS ───────────────────────────────────────────────
+function filtrarHoldings() {
+  const ticker = (document.getElementById('flt-ticker')?.value || '').toLowerCase().trim();
+  const tipo   = document.getElementById('flt-tipo')?.value  || '';
+  const cat    = document.getElementById('flt-cat')?.value   || '';
+  document.querySelectorAll('tr.holding-row').forEach(tr => {
+    const okTicker = !ticker || tr.dataset.ticker.includes(ticker);
+    const okTipo   = !tipo   || tr.dataset.tipo === tipo;
+    const okCat    = !cat    || tr.dataset.cat  === cat;
+    tr.style.display = (okTicker && okTipo && okCat) ? '' : 'none';
+  });
+}
+
+// ── EVENTOS ──────────────────────────────────────────────────────────
+function bindEvents() {
+  document.querySelectorAll('[data-action]').forEach(el => {
+    el.addEventListener('click', () => {
+      const action = el.dataset.action;
+      if (action === 'activos') {
+        state.view = 'activos';
+        render();
+      } else if (action === 'fund') {
+        state.view = 'fund';
+        render();
+      }
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
+
+async function init() {
+  render(); // pantalla de carga
+
+  try {
+    const [fund, meta, holdings, fxAyer] = await Promise.all([
+      cargarFund(),
+      cargarMeta(),
+      cargarHoldings(),
+      cargarFxAyer(),
+    ]);
+    FUND            = fund;
+    state.meta      = meta;
+    state.holdings  = holdings;
+    state.fxAyer    = fxAyer.mep;
+    state.fxAyerCCL = fxAyer.ccl;
+    state.loading   = false;
+
+    await cargarCortesCupon();
+    render();
+
+    const live = await fetchLivePrecios();
+    state.fxLive          = live.fxLive;
+    state.canje           = live.canje;
+    state.marketMap       = live.marketMap;
+    state.usMap           = live.usMap;
+    state.yahooMap        = live.yahooMap || {};
+    state.lastPriceUpdate = new Date();
+    render();
+
+    setInterval(async () => {
+      const live = await fetchLivePrecios();
+      state.fxLive          = live.fxLive;
+      state.canje           = live.canje;
+      state.marketMap       = live.marketMap;
+      state.usMap           = live.usMap;
+      state.yahooMap        = live.yahooMap || {};
+      state.lastPriceUpdate = new Date();
+      render();
+    }, 10 * 60_000);
+
+  } catch (e) {
+    console.error('[AP] init error:', e);
+    state.loading = false;
+    state.error = e.message;
+    render();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PDF UPLOAD + CMS ACTIVOS
+// ═══════════════════════════════════════════════════════════════════
+
+let _pdfPending = null;
+let _cmsData    = null;
+
+function loadPDFJS() {
+  return new Promise((resolve, reject) => {
+    if (window.pdfjsLib) { resolve(window.pdfjsLib); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = () => {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      resolve(window.pdfjsLib);
+    };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+function showModal(html) {
+  let el = document.getElementById('modal-overlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'modal-overlay';
+    el.className = 'modal-overlay';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = html;
+  el.style.display = 'flex';
+  el.onclick = e => { if (e.target === el) closeModal(); };
+}
+function closeModal() {
+  const el = document.getElementById('modal-overlay');
+  if (el) el.style.display = 'none';
+}
+
+function parseArNum(s) {
+  return parseFloat(String(s || '').trim().replace(/\./g, '').replace(',', '.')) || 0;
+}
+
+async function parsePDF(arrayBuffer) {
+  const pdfjs = await loadPDFJS();
+  const pdf   = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+
+  // ── Extraer ítems con posición, agrupar en líneas por y ───────────
+  const allItems = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const vp   = page.getViewport({ scale: 1 });
+    const tc   = await page.getTextContent();
+    tc.items.forEach(it => {
+      allItems.push({ text: it.str.trim(), x: Math.round(it.transform[4]),
+                      y: Math.round(vp.height - it.transform[5]) + (p - 1) * 10000, pg: p });
+    });
+  }
+
+  const lineMap = new Map();
+  for (const item of allItems) {
+    if (!item.text) continue;
+    let placed = false;
+    for (const [ky, arr] of lineMap) {
+      if (Math.abs(ky - item.y) <= 3) { arr.push(item); placed = true; break; }
+    }
+    if (!placed) lineMap.set(item.y, [item]);
+  }
+  const lines = [...lineMap.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([y, items]) => ({
+      y,
+      text: items.sort((a, b) => a.x - b.x).map(i => i.text).filter(Boolean).join(' '),
+      items: items.sort((a, b) => a.x - b.x),
+    }));
+
+  console.log('[PDF] páginas:', pdf.numPages, '| líneas:', lines.length);
+
+  const res = { holdings: [], denomMap: {}, fecha: null, navCierre: null, cuotapartes: null, pnCierre: null, ajustes: [] };
+  const numPat = /\d{1,3}(?:\.\d{3})*,\d+/g;
+  const fullText = lines.map(l => l.text).join('\n');
+
+  // Normaliza texto quitando acentos para comparaciones de patrones
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+
+  // Formato esperado: informe Ciclo Nova (IsinCode)
+  const isCicloNovaPDF = fullText.includes('IsinCode') && !fullText.includes('Abreviatura');
+
+  // Fecha
+  const fechaM = fullText.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+  if (fechaM) res.fecha = fechaM[1];
+
+  // NAV cierre: primera línea "Valor del Día" (Clase B viene primero)
+  const valorDiaLine = lines.find(l => /valor del d[íi]a/i.test(l.text));
+  if (valorDiaLine) {
+    const navNums = [...valorDiaLine.text.matchAll(numPat)].map(m => parseArNum(m[0])).filter(n => n > 0);
+    if (navNums.length) {
+      res.navCierre = navNums[navNums.length - 1];
+      console.log('[PDF] NAV cierre:', res.navCierre);
+    }
+  }
+
+  // Cuotapartes = suma de todos los "SALDO TOTAL DE CUOTAPARTES"
+  let cpTotal = 0;
+  for (const l of lines) {
+    if (/saldo total de cuotapartes/i.test(l.text)) {
+      const nums = [...l.text.matchAll(numPat)].map(m => parseArNum(m[0])).filter(n => n > 0);
+      if (nums.length) cpTotal += nums[nums.length - 1];
+    }
+  }
+  if (cpTotal > 0) {
+    res.cuotapartes = cpTotal;
+    console.log('[PDF] Cuotapartes total:', cpTotal);
+  }
+
+  // PN cierre: "Valor Patrimonial del Fondo"
+  const pnLine = lines.find(l => /valor patrimonial del fondo/i.test(l.text));
+  if (pnLine) {
+    const nums = [...pnLine.text.matchAll(numPat)].map(m => parseArNum(m[0])).filter(n => n > 0);
+    if (nums.length) {
+      res.pnCierre = nums[0];
+      console.log('[PDF] PN cierre:', res.pnCierre);
+    }
+  }
+
+  // ── Ajustes contables ────────────────────────────────────────────
+  // Nota: los negativos vienen entre paréntesis en el PDF; numPat captura
+  // el número sin signo y el signo lo aporta la spec.
+  const ajSpec = [
+    { key: '(+) Disponibilidades',         pat: 'DISPONIBILIDADES',       sign:  1 },
+    { key: '(+) Créditos',                 pat: 'CREDITOS',               sign:  1 },
+    { key: '(+) Bony',                     pat: 'BONY',                   sign:  1 },
+    { key: '(+) Deudores por operaciones', pat: 'DEUDORES POR OPERACION', sign:  1 },
+    { key: '(−) Provisiones',              pat: 'PROVISIONES',            sign: -1 },
+    { key: '(−) Caución tomadora',         pat: 'CAUCION TOMADORA',       sign: -1 },
+    { key: '(−) Acreedores',               pat: 'ACREEDORES',             sign: -1 },
+    { key: '(−) Honorarios a pagar',       pat: 'HONORARIOS A PAGAR',     sign: -1 },
+  ];
+  for (const { key, pat, sign } of ajSpec) {
+    const line = lines.find(l => norm(l.text).includes(pat));
+    if (!line) continue;
+    const nums = [...line.text.matchAll(numPat)];
+    if (nums.length) {
+      // Primer número de la línea = monto; los siguientes son % del portfolio
+      const val = parseArNum(nums[0][0]) * sign;
+      res.ajustes.push({ label: key, val });
+      console.log('[PDF ajuste]', key, '=', val);
+    }
+  }
+
+  // Residual del PASIVO: si el total del PASIVO no coincide con la suma
+  // de los ítems negativos capturados, agregar "(−) Otros pasivos".
+  if (isCicloNovaPDF) {
+    const pasivoLine = lines.find(l => norm(l.text).trim().startsWith('PASIVO'));
+    if (pasivoLine) {
+      const nums = [...pasivoLine.text.matchAll(numPat)].map(m => parseArNum(m[0])).filter(n => n > 0);
+      if (nums.length) {
+        const pasivoTotal = -nums[0];
+        const sumNeg = res.ajustes.filter(a => a.val < 0).reduce((s, a) => s + a.val, 0);
+        const residual = pasivoTotal - sumNeg;
+        if (Math.abs(residual) > 0.01) {
+          res.ajustes.push({ label: '(−) Otros pasivos', val: residual });
+          console.log('[PDF ajuste] (−) Otros pasivos =', residual);
+        }
+      }
+    }
+  }
+
+  // ── Buscar la sección INVERSIONES que precede la tabla de datos ───
+  let invIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (/\bInversiones\b/i.test(lines[i].text)) {
+      const ctx = lines.slice(i, i + 8).map(l => l.text).join(' ');
+      if (ctx.includes('Abreviatura') || ctx.includes('IsinCode') ||
+          (ctx.includes('Denominación') && (ctx.includes('Cantidad') || ctx.includes('Cotización')))) {
+        invIdx = i;
+        break;
+      }
+    }
+  }
+  console.log('[PDF] Tabla INVERSIONES en línea:', invIdx,
+    invIdx >= 0 ? lines[invIdx].text.substring(0,60) : 'NO ENCONTRADA');
+
+  if (invIdx === -1) {
+    console.warn('[PDF] Sección de inversiones no encontrada.');
+    return res;
+  }
+
+  // Fin de sección
+  let totIdx = lines.length - 1;
+  for (let i = invIdx + 2; i < lines.length; i++) {
+    const t = lines[i].text.trim();
+    if (t.startsWith('Total Inversiones') ||
+        (t.startsWith('Total') && /\d{9,}/.test(t.replace(/\./g, '').replace(/,/g, ''))) ||
+        t === 'Disponibilidades' || /^Clase (A|B|Ley)$/.test(t) || t.startsWith('La Duration')) {
+      totIdx = i; break;
+    }
+  }
+
+  // Filas de datos: entre invIdx+1 y totIdx, con al menos 2 números
+  const dataLines = lines.slice(invIdx + 1, totIdx).filter(l => {
+    const t = l.text.trim();
+    if (/^(PRIVADA|PUBLICA|Inversiones)\b/i.test(t)) return false; // subsection headers
+    if (t.includes('Denominación') || t.includes('Abreviatura') || t.includes('IsinCode')) return false;
+    return ([...t.matchAll(numPat)] || []).length >= 2;
+  });
+
+  console.log('[PDF] Filas de datos:', dataLines.length);
+
+  const usedTickers = new Set();
+
+  for (const line of dataLines) {
+    const t = line.text.trim();
+    const nums = [...t.matchAll(numPat)].map(m => m[0]);
+    let ticker = '', cierre = 0, cantidad = 0;
+
+    // ── Formato Ciclo Nova: Ticker - Denominación | Isin | Cantidad | Cierre | Total ─
+    const dashIdx = t.indexOf(' - ');
+    const firstPart = dashIdx > 0 ? t.substring(0, dashIdx) : t.split(' ')[0];
+    ticker = firstPart.trim().split(/\s+/)[0].replace(/^#/, '');
+    // Saltar filas de subtotales de sección (primer carácter es dígito)
+    if (/^\d/.test(ticker) || /[,\.]/.test(ticker)) continue;
+    // Saltar cauciones — tienen su propio parser dedicado
+    if (/^(APERTURA|CAUCION|PASE)$/.test(ticker)) continue;
+    // Columnas: Cantidad | Cierre | Total | % | ...
+    // Usamos Total / Cantidad para mayor precisión
+    if (nums.length >= 3) {
+      cantidad = parseArNum(nums[0]);
+      const total = parseArNum(nums[2]);
+      cierre = cantidad > 0 && total > 0 ? total / cantidad : parseArNum(nums[1]);
+    } else if (nums.length >= 2) {
+      cantidad = parseArNum(nums[0]);
+      cierre   = parseArNum(nums[1]);
+    }
+
+    if (!ticker || cierre <= 0 || cantidad <= 0) {
+      console.log('[PDF] Fila ignorada:', t.substring(0, 80));
+      continue;
+    }
+
+    // Deduplicar
+    if (usedTickers.has(ticker)) {
+      const fw = t.split(/\s+/)[0]?.replace(/^#/, '') || '';
+      if (fw && fw !== ticker && !usedTickers.has(fw)) {
+        ticker = fw;
+      } else {
+        const cm = t.match(/\((\d{5,})\)/);
+        ticker = cm ? ticker + '_' + cm[1] : ticker + '_' + (usedTickers.size + 1);
+      }
+    }
+
+    usedTickers.add(ticker);
+    res.denomMap[ticker] = t.split(/[(\-]/)[0].trim().substring(0, 60);
+    res.holdings.push({ ticker, cierre, cantidad });
+    console.log('[PDF] Holding:', ticker, '| cierre:', cierre, '| cant:', cantidad);
+  }
+
+  // ── Cauciones / Aperturas ──────────────────────────────────────────
+  const caucionSecs = [
+    { pat: /Aperturas.*Cauciones.*[Dd][oó]lares/i, sufijo: '' },
+    { pat: /Aperturas.*Cauciones.*Pesos/i,          sufijo: '_ARS' },
+  ];
+  const caucionCount = {};
+  for (const { pat, sufijo } of caucionSecs) {
+    const secIdx = lines.findIndex(l => pat.test(l.text));
+    if (secIdx < 0) continue;
+    console.log('[PDF] Sección cauciones', sufijo || 'USD', 'en línea:', secIdx);
+    for (let i = secIdx + 1; i < Math.min(secIdx + 60, lines.length); i++) {
+      const lt = lines[i].text.trim();
+      if (!lt) continue;
+      if (/^(Aperturas|Disponibilidades|Total\s|La Duration|Clase\s)/i.test(lt) &&
+          !/^(APERTURA|CAUCION|PASE)\s/.test(lt)) break;
+      if (!/^(APERTURA|CAUCION|PASE)\s/i.test(lt)) continue;
+      const nums = [...lt.matchAll(numPat)].map(m => parseArNum(m[0])).filter(n => n > 0);
+      if (nums.length < 2) continue;
+      const total = nums[1];
+      if (total <= 0) continue;
+      const base = 'APERTURA' + sufijo;
+      const cnt = caucionCount[base] = (caucionCount[base] || 0) + 1;
+      let ticker = cnt === 1 ? base : `${base}_${cnt}`;
+      while (usedTickers.has(ticker)) ticker = `${base}_${usedTickers.size + 1}`;
+      usedTickers.add(ticker);
+      res.holdings.push({ ticker, cierre: total, cantidad: 1 });
+      console.log('[PDF] Caución:', ticker, '| total:', total, '| tasa:', nums[0], '%');
+    }
+  }
+
+  console.log('[PDF] Total:', res.holdings.length, 'instrumentos');
+  return res;
+}
+
+
+function showPreviewModal(data) {
+  _pdfPending = data;
+  const rows = data.holdings.map(h => `
+    <tr>
+      <td style="padding:7px 12px"><span class="ticker-chip">${h.ticker}</span></td>
+      <td style="padding:7px 12px;color:#9A9AA0;font-size:12px">${(data.denomMap[h.ticker] || '').substring(0,35)}</td>
+      <td style="padding:7px 12px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px">${fNum(h.cantidad)}</td>
+      <td style="padding:7px 12px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px">${f4(h.cierre)}</td>
+    </tr>`).join('');
+
+  const infoBar = data.navCierre ? `
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:rgba(56,189,248,0.07);border-radius:8px;border:1px solid rgba(56,189,248,0.15)">
+      <div><div class="metric-label">Fecha</div><div style="font-weight:700">${data.fecha || '—'}</div></div>
+      <div><div class="metric-label">NAV cierre</div><div style="font-family:'JetBrains Mono',monospace;font-weight:700">${f4(data.navCierre)}</div></div>
+      <div><div class="metric-label">Cuotapartes</div><div style="font-family:'JetBrains Mono',monospace;font-weight:700">${data.cuotapartes ? fNum(data.cuotapartes) : '—'}</div></div>
+      <div><div class="metric-label">Instrumentos</div><div style="font-weight:700">${data.holdings.length}</div></div>
+    </div>` : '';
+
+  showModal(`
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <div style="font-size:11px;color:#5A5A60;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Cargar PDF</div>
+          <div style="font-size:18px;font-weight:800">${FUND?.nombre || FUND_ID}</div>
+        </div>
+        <button onclick="closeModal()" style="background:none;border:none;color:#9A9AA0;cursor:pointer;font-size:26px;line-height:1;padding:0">×</button>
+      </div>
+      <div class="modal-body">
+        ${infoBar}
+        <p style="color:#9A9AA0;font-size:13px;margin-bottom:14px">Se detectaron <strong style="color:#fff">${data.holdings.length} instrumentos</strong>. Al confirmar se reemplazarán todos los holdings anteriores del fondo.</p>
+        <div style="max-height:300px;overflow-y:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.08)">
+          <table style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.08)">
+                <th style="padding:8px 12px;text-align:left;font-size:10px;color:#5A5A60;font-weight:700;text-transform:uppercase">TICKER</th>
+                <th style="padding:8px 12px;text-align:left;font-size:10px;color:#5A5A60;font-weight:700;text-transform:uppercase">DENOMINACIÓN</th>
+                <th style="padding:8px 12px;text-align:right;font-size:10px;color:#5A5A60;font-weight:700;text-transform:uppercase">CANTIDAD</th>
+                <th style="padding:8px 12px;text-align:right;font-size:10px;color:#5A5A60;font-weight:700;text-transform:uppercase">CIERRE</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn-primary" onclick="confirmarCargaPDF()">✓ Confirmar y guardar</button>
+      </div>
+    </div>`);
+}
+
+async function confirmarCargaPDF() {
+  const data = _pdfPending;
+  if (!data) return;
+
+  showModal(`<div class="modal-box" style="max-width:340px;padding:40px;text-align:center">
+    <div class="spinner" style="margin:0 auto 16px"></div>
+    <div style="color:#9A9AA0;font-size:14px;font-weight:600">Guardando holdings…</div>
+  </div>`);
+
+  try {
+    // 1. Borrar holdings anteriores
+    const del = await fetch(`${SB_URL}/${T_HOLDINGS}?fund_id=eq.${FUND_ID}`, { method: 'DELETE', headers: SB_HDR });
+    if (!del.ok && del.status !== 404) throw new Error('Error borrando holdings: ' + del.status);
+
+    // 2. Insertar nuevos
+    const newRows = data.holdings.map(h => ({ fund_id: FUND_ID, ticker: h.ticker, cantidad: h.cantidad, cierre: h.cierre }));
+    const ins = await fetch(`${SB_URL}/${T_HOLDINGS}`, {
+      method: 'POST',
+      headers: { ...SB_HDR, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(newRows),
+    });
+    if (!ins.ok) throw new Error('Error insertando holdings: ' + ins.status);
+
+    // 3. Actualizar funds_ns (nav, cuotapartes, fecha, pn, ajustes)
+    const patch = {};
+    if (data.navCierre)                          patch.nav_cierre  = data.navCierre;
+    if (data.cuotapartes)                        patch.cuotapartes = data.cuotapartes;
+    if (data.fecha)                              patch.pdf_date    = data.fecha;
+    if (data.pnCierre)                           patch.pn_cierre   = data.pnCierre;
+    if (data.ajustes && data.ajustes.length > 0) patch.ajustes     = data.ajustes;
+    if (Object.keys(patch).length) {
+      await fetch(`${SB_URL}/${T_FUNDS}?id=eq.${FUND_ID}`, {
+        method: 'PATCH',
+        headers: { ...SB_HDR, 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      if (FUND) Object.assign(FUND, {
+        navCierre:   data.navCierre   ?? FUND.navCierre,
+        cuotapartes: data.cuotapartes ?? FUND.cuotapartes,
+        pdfDate:     data.fecha       ?? FUND.pdfDate,
+        pnCierre:    data.pnCierre    ?? FUND.pnCierre,
+      });
+    }
+
+    // 4. Actualizar ajustes en memoria
+    if (data.ajustes && data.ajustes.length > 0) AJUSTES = data.ajustes;
+
+    // 5. Actualizar state.holdings
+    state.holdings = data.holdings.map(h => ({ ticker: h.ticker, cantidad: h.cantidad, cierre: h.cierre }));
+
+    // 6. Detectar tickers nuevos
+    let existing = new Set();
+    try {
+      const ac = await sbGet(`/${T_ACTIVOS}?select=ticker`);
+      existing = new Set(ac.map(a => a.ticker));
+    } catch(e) { /* vacía */ }
+
+    const nuevos = data.holdings.filter(h => !existing.has(h.ticker));
+    if (nuevos.length > 0) {
+      showActivosCMS(nuevos, data.denomMap);
+    } else {
+      closeModal();
+      render();
+    }
+  } catch(e) {
+    console.error('[AP] confirmarCargaPDF:', e);
+    showModal(`<div class="modal-box" style="max-width:400px;padding:32px">
+      <div style="color:#D33A3F;font-size:15px;font-weight:700;margin-bottom:8px">Error al guardar</div>
+      <div style="color:#9A9AA0;font-size:13px;margin-bottom:20px">${e.message}</div>
+      <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
+    </div>`);
+  }
+}
+
+function autoSuggest(ticker, denom) {
+  const t = ticker.toUpperCase();
+  const d = (denom || '').toUpperCase();
+  // Soberanos hard dollar (AL30, AO27, GD, GE…)
+  if (/^(AL|AO|GD|GE)\d+/.test(t))
+    return { fuente: 'data912_arg_bonds', moneda: 'USD', lamina: 100, tipo: 'Soberano HD' };
+  // Soberanos dólar linked (con D al final)
+  if (/^(T\w+D|AL\w+D|AO\w+D)$/.test(t) && t.endsWith('D'))
+    return { fuente: 'data912_arg_bonds', moneda: 'USD', lamina: 1, tipo: 'Soberano DL' };
+  // Duales TAMAR (TTM/TTJ/TTS/TTD)
+  if (/^TT[MJSD]/.test(t) && !t.endsWith('D'))
+    return { fuente: 'data912_arg_notes', moneda: 'ARS', lamina: 1, tipo: 'Dual Tamar/CER' };
+  // Bonos TAMAR (TMG…)
+  if (/^TMG/.test(t) || d.includes('TAMAR'))
+    return { fuente: 'data912_arg_notes', moneda: 'ARS', lamina: 1, tipo: 'Tamar' };
+  // CER (Boncer TZX/TX, letras CER X)
+  if ((/^(TZX|TX\d|X\d)/.test(t) || d.includes('BONCER') || d.includes('CER')) && !t.endsWith('D'))
+    return { fuente: 'data912_arg_notes', moneda: 'ARS', lamina: 1, tipo: 'CER' };
+  // Tasa Fija ARS (Lecaps S, Boncaps T, M)
+  if (/^(M\d|T\d|S\d)/.test(t) && !t.endsWith('D'))
+    return { fuente: 'data912_arg_notes', moneda: 'ARS', lamina: 1, tipo: 'Tasa Fija ARS' };
+  // Money Market ARS
+  if (d.includes('LIQUIDEZ PESOS') || d.includes('MONEY MARKET ARS') || d.includes('AHORRO PESOS'))
+    return { fuente: 'calculo MM ars', moneda: 'ARS', lamina: 1, tipo: 'Money Market ARS' };
+  // Money Market USD
+  if (/^(BALANDP|BAVSAP|BALAN|BAVSA|ADCAP|ALLARIA|ARGENFUNDS|IAM)/.test(t) || d.includes('MONEY MARKET') || d.includes('LIQUIDEZ DOLAR'))
+    return { fuente: 'calculo MM usd', moneda: 'USD', lamina: 1, tipo: 'Money Market USD' };
+  // Pagares USD (UMV / cheques dólar)
+  if (/^(UMV|#UMV|PAGARE)/.test(t) || d.includes('UMV') || d.includes('PAGARÉ'))
+    return { fuente: 'calculo devengamiento', moneda: 'USD', lamina: 1, tipo: 'Pagare USD' };
+  // Pagares ARS (cheques pesos)
+  if (/^#?MAV/.test(t))
+    return { fuente: 'calculo devengamiento', moneda: 'ARS', lamina: 1, tipo: 'Pagare ARS' };
+  // ONs
+  if (d.includes('ON ') || d.includes('OBLIGACI'))
+    return { fuente: 'data912_arg_corp', moneda: 'USD', lamina: 100, tipo: 'ON HD' };
+  // Cauciones / Aperturas
+  if (/^APERTURA(_ARS)?(_\d+)?$/.test(t) || t === 'CAUCION' || t === 'PASE') {
+    if (t.includes('_ARS') || (FUND?.moneda === 'ARS'))
+      return { fuente: 'devengamiento ARS', moneda: 'ARS', lamina: 1, tipo: 'Caución ARS' };
+    return { fuente: 'calculo MM usd', moneda: 'USD', lamina: 1, tipo: 'Caución USD' };
+  }
+  // Default para fondo ARS
+  return { fuente: 'hold', moneda: 'ARS', lamina: 1, tipo: 'Otros' };
+}
+
+function showActivosCMS(nuevos, denomMap) {
+  _cmsData = { nuevos, denomMap };
+
+  const TIPO_LISTA = [
+    'Caución ARS','Caución USD','CER',
+    'Commodities','Compra Call','Covered Call','Dual Tamar/CER','Equity Argentina','Equity USA',
+    'Futuro de Dólar',
+    'Money Market ARS','Money Market USD','ON DL','ON HD','Otros',
+    'Pagare ARS','Pagare USD','Short Equity','Short Renta Fija',
+    'Soberano DL','Soberano HD','Tamar','Tasa Fija ARS','Venta Call',
+  ];
+  const CATEGORIA_LISTA = [
+    'CER','Commodities','Compra Call','Covered Call','Dual Tamar/CER','Equity','Futuro de Dólar','Liquidez',
+    'Renta Fija','Short Equity','Short Renta Fija','Tamar','Tasa Fija ARS','Venta Call',
+  ];
+  const FUENTE_LISTA = Object.keys(FUENTE_KIND);
+
+  const tableRows = nuevos.map((h, i) => {
+    const denom    = denomMap[h.ticker] || h.ticker;
+    const s        = autoSuggest(h.ticker, denom);
+    const tipoOpts = TIPO_LISTA.map(t => `<option value="${t}" ${t===s.tipo?'selected':''}>${t}</option>`).join('');
+    const catOpts  = CATEGORIA_LISTA.map(c => `<option value="${c}" ${(['CER','Tamar','Tasa Fija ARS','Dual Tamar/CER'].includes(s.tipo)&&c==='Renta Fija')?'selected':''}>${c}</option>`).join('');
+    const fOpts    = FUENTE_LISTA.map(f => `<option value="${f}" ${f===s.fuente?'selected':''}>${f}</option>`).join('');
+    return `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+        <td style="padding:8px 6px;white-space:nowrap">
+          <span class="ticker-chip" style="font-size:11px">${h.ticker}</span>
+          <div style="font-size:10px;color:#5A5A60;margin-top:3px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${denom.substring(0,28)}</div>
+        </td>
+        <td style="padding:8px 4px"><input class="cms-input" id="c-nom-${i}" value="${denom.substring(0,40)}" placeholder="Nombre" style="min-width:130px"></td>
+        <td style="padding:8px 4px"><select class="cms-select" id="c-tip-${i}" style="min-width:120px">${tipoOpts}</select></td>
+        <td style="padding:8px 4px"><select class="cms-select" id="c-cat-${i}" style="min-width:120px">${catOpts}</select></td>
+        <td style="padding:8px 4px">
+          <select class="cms-select" id="c-mon-${i}" style="min-width:64px">
+            <option value="ARS" ${s.moneda==='ARS'?'selected':''}>ARS</option>
+            <option value="USD" ${s.moneda==='USD'?'selected':''}>USD</option>
+          </select>
+        </td>
+        <td style="padding:8px 4px"><select class="cms-select" id="c-fue-${i}" style="min-width:165px">${fOpts}</select></td>
+        <td style="padding:8px 4px"><input class="cms-input" id="c-sym-${i}" value="${h.ticker}" placeholder="Symbol" style="width:88px;font-family:'JetBrains Mono',monospace;font-size:11px"></td>
+        <td style="padding:8px 4px"><input class="cms-input" id="c-tas-${i}" value="" placeholder="TNA%" style="width:66px;font-family:'JetBrains Mono',monospace;font-size:11px"></td>
+        <td style="padding:8px 4px"><input class="cms-input" id="c-lam-${i}" value="${s.lamina}" placeholder="Lámina" style="width:70px;font-family:'JetBrains Mono',monospace;font-size:11px"></td>
+        <td style="padding:8px 4px"><input class="cms-input" id="c-bas-${i}" value="" placeholder="Base" style="width:90px;font-family:'JetBrains Mono',monospace;font-size:11px"></td>
+        <td style="padding:8px 4px"><input class="cms-input" id="c-pi-${i}" value="" placeholder="0.00" style="width:72px;font-family:'JetBrains Mono',monospace;font-size:11px"></td>
+      </tr>`;
+  }).join('');
+
+  showModal(`
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <div>
+          <div style="font-size:11px;color:#38BDF8;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Nuevos activos detectados</div>
+          <div style="font-size:18px;font-weight:800">${nuevos.length} instrumento${nuevos.length>1?'s':''} sin registrar</div>
+        </div>
+        <button onclick="saltarCMS()" style="background:none;border:none;color:#9A9AA0;cursor:pointer;font-size:13px;font-weight:600">Saltar →</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:#9A9AA0;font-size:13px;margin-bottom:16px">Completá los datos para calcular precios. Los campos <span style="color:#38BDF8">fuente precio</span> y <span style="color:#38BDF8">lámina</span> son los más importantes.</p>
+        <div style="overflow-x:auto">
+          <table class="cms-table">
+            <thead>
+              <tr>
+                <th>Ticker</th><th>Nombre</th><th>Tipo</th><th>Categoría</th><th>Moneda</th>
+                <th>Fuente precio ★</th><th>Live symbol</th><th>TNA %</th><th>Lámina ★</th><th>Base</th><th>P. inicial</th>
+              </tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="saltarCMS()">Saltar</button>
+        <button class="btn-primary" onclick="guardarNuevosActivos()">💾 Guardar activos</button>
+      </div>
+    </div>`);
+}
+
+function saltarCMS() { closeModal(); render(); }
+
+async function guardarNuevosActivos() {
+  if (!_cmsData) return;
+  const { nuevos } = _cmsData;
+
+  const rows = nuevos.map((h, i) => ({
+    ticker:        h.ticker,
+    nombre:        document.getElementById(`c-nom-${i}`)?.value?.trim() || h.ticker,
+    tipo_activo:   document.getElementById(`c-tip-${i}`)?.value || 'Otros',
+    categoria:     document.getElementById(`c-cat-${i}`)?.value || null,
+    moneda:        document.getElementById(`c-mon-${i}`)?.value || 'ARS',
+    fuente_precio: document.getElementById(`c-fue-${i}`)?.value || 'hold',
+    live_symbol:   document.getElementById(`c-sym-${i}`)?.value?.trim() || h.ticker,
+    tasa:          parseFloat(document.getElementById(`c-tas-${i}`)?.value) || null,
+    lamina:        parseFloat(document.getElementById(`c-lam-${i}`)?.value) || 1,
+    base:          parseFloat(document.getElementById(`c-bas-${i}`)?.value) || null,
+    precio_inicial: parseFloat(document.getElementById(`c-pi-${i}`)?.value) || null,
+  }));
+
+  showModal(`<div class="modal-box" style="max-width:340px;padding:40px;text-align:center">
+    <div class="spinner" style="margin:0 auto 16px"></div>
+    <div style="color:#9A9AA0;font-size:14px;font-weight:600">Guardando activos…</div>
+  </div>`);
+
+  try {
+    const resp = await fetch(`${SB_URL}/${T_ACTIVOS}`, {
+      method: 'POST',
+      headers: { ...SB_HDR, 'Content-Type': 'application/json', 'Prefer': 'return=minimal,resolution=ignore-duplicates' },
+      body: JSON.stringify(rows),
+    });
+    if (!resp.ok) throw new Error('Error insertando activos: ' + resp.status + ' ' + await resp.text());
+
+    // Actualizar meta en memoria
+    for (const r of rows) {
+      const kind = FUENTE_KIND[r.fuente_precio] || 'hold';
+      state.meta[r.ticker] = {
+        denom: r.nombre, tipo: r.tipo_activo, categoria: r.categoria || '', moneda: r.moneda,
+        fuente: r.fuente_precio, kind,
+        liveSymbol: r.live_symbol || r.ticker,
+        tasa: r.tasa, lamina: r.lamina || 1,
+        base: r.base || 0, precioInicial: r.precio_inicial,
+      };
+    }
+    closeModal();
+    render();
+  } catch(e) {
+    console.error('[AP] guardarNuevosActivos:', e);
+    showModal(`<div class="modal-box" style="max-width:400px;padding:32px">
+      <div style="color:#D33A3F;font-size:15px;font-weight:700;margin-bottom:8px">Error al guardar</div>
+      <div style="color:#9A9AA0;font-size:13px;margin-bottom:20px">${e.message}</div>
+      <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
+    </div>`);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// CORTE DE CUPÓN
+// ══════════════════════════════════════════════════════════════════════
+
+function abrirCorteCupon() {
+  const fondoMoneda = FUND?.moneda || 'ARS';
+
+  showModal(`
+    <div class="modal-box" style="max-width:420px">
+      <div class="modal-header">
+        <div>
+          <div style="font-size:11px;color:#F59E0B;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Corte de cupón</div>
+          <div style="font-size:18px;font-weight:800">${FUND?.nombre || FUND_ID}</div>
+        </div>
+        <button onclick="closeModal()" style="background:none;border:none;color:#9A9AA0;cursor:pointer;font-size:26px;line-height:1;padding:0">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:#9A9AA0;font-size:13px;margin-bottom:18px">
+          El monto queda registrado solo por hoy. Cualquiera que entre a la web ese día lo va a ver reflejado en el PN.
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:14px">
+          <div>
+            <label style="font-size:11px;color:#9A9AA0;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Monto</label>
+            <input id="cc-monto" type="number" step="any" placeholder="0.00"
+              oninput="previewCorteCupon()"
+              style="width:100%;box-sizing:border-box;padding:10px 12px;background:#1A1A20;border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#E5E5E7;font-size:15px;font-family:'JetBrains Mono',monospace;outline:none">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#9A9AA0;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Moneda</label>
+            <select id="cc-moneda" onchange="previewCorteCupon()"
+              style="padding:10px 12px;background:#1A1A20;border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#E5E5E7;font-size:14px;font-family:inherit;outline:none;cursor:pointer;height:42px">
+              <option value="ARS" ${fondoMoneda === 'ARS' ? 'selected' : ''}>ARS</option>
+              <option value="USD" ${fondoMoneda === 'USD' ? 'selected' : ''}>USD</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;color:#9A9AA0;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Descripción (opcional)</label>
+          <input id="cc-desc" type="text" placeholder="Ej: Cupón Boncer julio"
+            style="width:100%;box-sizing:border-box;padding:10px 12px;background:#1A1A20;border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#E5E5E7;font-size:14px;font-family:inherit;outline:none">
+        </div>
+
+        <div id="cc-preview" style="padding:12px 14px;background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.2);border-radius:8px;font-size:13px;color:#F59E0B;min-height:40px">
+          Ingresá un monto para ver el impacto en el PN.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn-primary" style="background:#F59E0B;color:#000" onclick="guardarCorteCupon()">✂ Guardar corte</button>
+      </div>
+    </div>`);
+}
+
+function previewCorteCupon() {
+  const montoRaw   = parseFloat(document.getElementById('cc-monto')?.value);
+  const moneda     = document.getElementById('cc-moneda')?.value;
+  const preview    = document.getElementById('cc-preview');
+  if (!preview) return;
+  if (!montoRaw || isNaN(montoRaw) || montoRaw <= 0) {
+    preview.textContent = 'Ingresá un monto para ver el impacto en el PN.';
+    return;
+  }
+
+  const fondoMoneda = FUND?.moneda || 'ARS';
+  const mep         = state.fxLive || state.fxAyer || 0;
+  let montoFondo, detalle;
+
+  if (moneda === fondoMoneda) {
+    montoFondo = montoRaw;
+    detalle    = '';
+  } else if (fondoMoneda === 'ARS' && moneda === 'USD') {
+    montoFondo = mep > 0 ? montoRaw * mep : montoRaw;
+    detalle    = mep > 0 ? ` (USD ${fNum(montoRaw)} × MEP $${fNum(mep)})` : ' (MEP no disponible)';
+  } else if (fondoMoneda === 'USD' && moneda === 'ARS') {
+    montoFondo = mep > 0 ? montoRaw / mep : montoRaw;
+    detalle    = mep > 0 ? ` (ARS ${fNum(montoRaw)} ÷ MEP $${fNum(mep)})` : ' (MEP no disponible)';
+  }
+
+  const { pn } = calcNAV();
+  const impacto = pn > 0 ? ` → ${(montoFondo / pn * 100).toFixed(3)}% del PN` : '';
+  preview.innerHTML = `<strong>+${fARS(montoFondo)} ${fondoMoneda}</strong>${detalle}${impacto}`;
+}
+
+async function guardarCorteCupon() {
+  const monto = parseFloat(document.getElementById('cc-monto')?.value);
+  const moneda = document.getElementById('cc-moneda')?.value;
+  const descripcion = document.getElementById('cc-desc')?.value?.trim() || null;
+
+  if (!monto || isNaN(monto) || monto <= 0) {
+    alert('Ingresá un monto válido.');
+    return;
+  }
+
+  const fecha = new Date().toISOString().split('T')[0];
+
+  showModal(`<div class="modal-box" style="max-width:340px;padding:40px;text-align:center">
+    <div class="spinner" style="margin:0 auto 16px"></div>
+    <div style="color:#9A9AA0;font-size:14px;font-weight:600">Guardando corte…</div>
+  </div>`);
+
+  try {
+    const resp = await fetch(`${SB_URL}/${T_CORTES}`, {
+      method: 'POST',
+      headers: { ...SB_HDR, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+      body: JSON.stringify({ fund_id: FUND_ID, fecha, monto, moneda, descripcion }),
+    });
+    if (!resp.ok) throw new Error('Error guardando corte: ' + resp.status + ' ' + await resp.text());
+    const [row] = await resp.json();
+    state.cortesCupon.push(row);
+    injectCorteMeta();
+    closeModal();
+    render();
+  } catch(e) {
+    console.error('[AP] guardarCorteCupon:', e);
+    showModal(`<div class="modal-box" style="max-width:400px;padding:32px">
+      <div style="color:#D33A3F;font-size:15px;font-weight:700;margin-bottom:8px">Error al guardar</div>
+      <div style="color:#9A9AA0;font-size:13px;margin-bottom:20px">${e.message}</div>
+      <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
+    </div>`);
+  }
+}
+
+async function eliminarCorteCupon(id) {
+  if (!confirm('¿Eliminar este corte de cupón?')) return;
+  try {
+    const resp = await fetch(`${SB_URL}/${T_CORTES}?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: SB_HDR,
+    });
+    if (!resp.ok && resp.status !== 404) throw new Error('Error eliminando: ' + resp.status);
+    state.cortesCupon = state.cortesCupon.filter(c => c.id !== id);
+    delete state.meta[`CUPON_${id}`];
+    render();
+  } catch(e) {
+    alert('Error al eliminar: ' + e.message);
+  }
+}
+
+async function handlePDFUpload(file) {
+  if (!file) return;
+  document.getElementById('pdf-input').value = '';
+
+  showModal(`<div class="modal-box" style="max-width:340px;padding:40px;text-align:center">
+    <div class="spinner" style="margin:0 auto 16px"></div>
+    <div style="color:#9A9AA0;font-size:14px;font-weight:600">Leyendo PDF…</div>
+  </div>`);
+
+  try {
+    const buf  = await file.arrayBuffer();
+    const data = await parsePDF(buf);
+    if (!data.holdings.length) {
+      showModal(`<div class="modal-box" style="max-width:420px;padding:32px">
+        <div style="color:#D33A3F;font-size:15px;font-weight:700;margin-bottom:8px">No se encontraron inversiones</div>
+        <div style="color:#9A9AA0;font-size:13px;margin-bottom:20px">Verificá que sea el "Informe de Gestión" del fondo.</div>
+        <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
+      </div>`);
+      return;
+    }
+    showPreviewModal(data);
+  } catch(e) {
+    console.error('[AP] handlePDFUpload:', e);
+    showModal(`<div class="modal-box" style="max-width:420px;padding:32px">
+      <div style="color:#D33A3F;font-size:15px;font-weight:700;margin-bottom:8px">Error al leer el PDF</div>
+      <div style="color:#9A9AA0;font-size:13px;margin-bottom:20px">${e.message}</div>
+      <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
+    </div>`);
+  }
+}
+
+// ── ACTIVOS TABLE VIEW ──────────────────────────────────────────────
+function renderActivosPage() {
+  return `
+    ${renderTopBar()}
+    <div class="fund-page">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+        <button data-action="fund" class="back-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.6" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Volver a cartera
+        </button>
+        <div style="font-size:18px;font-weight:800">${FUND?.nombre || FUND_ID} · Activos</div>
+      </div>
+      <div class="table-wrap" id="activos-table-wrap">
+        <div class="center-msg" style="min-height:120px"><div class="spinner"></div><span>Cargando activos…</span></div>
+      </div>
+    </div>`;
+}
+
+async function cargarActivosTabla() {
+  const wrap = document.getElementById('activos-table-wrap');
+  try {
+    const resp = await fetch(`${SB_URL}/${T_ACTIVOS}?select=*&order=ticker.asc`, { headers: SB_HDR });
+    if (!resp.ok) throw new Error(await resp.text());
+    const activos = await resp.json();
+
+    if (!activos.length) {
+      wrap.innerHTML = `<div class="center-msg" style="min-height:80px"><span style="color:#5A5A60">Sin activos cargados para este fondo.</span></div>`;
+      return;
+    }
+
+    const rows = activos.map(a => `
+      <tr>
+        <td><span class="ticker-chip">${a.ticker || ''}</span></td>
+        <td class="denom-cell" style="max-width:200px">${a.nombre || ''}</td>
+        <td>${a.tipo_activo || ''}</td>
+        <td>${a.categoria || ''}</td>
+        <td>
+          <span class="moneda-badge" style="background:${a.moneda==='USD'?'#ECFCCB':'#EDE9FE'};color:${a.moneda==='USD'?'#3F6212':'#5B21B6'}">${a.moneda || ''}</span>
+        </td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9A9AA0">${a.fuente_precio || ''}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${a.lamina ?? ''}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${a.base || ''}</td>
+        <td style="white-space:nowrap">
+          <button onclick="abrirEditarActivo('${a.ticker}')" style="background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);color:#38BDF8;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Editar</button>
+          <button onclick="eliminarActivo('${a.ticker}')" style="background:rgba(211,58,63,0.12);border:1px solid rgba(211,58,63,0.3);color:#D33A3F;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:6px">Eliminar</button>
+        </td>
+      </tr>`).join('');
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th><th>Nombre</th><th>Tipo</th><th>Categoría</th>
+            <th>Moneda</th><th>Fuente precio</th><th>Lámina</th><th>Base</th><th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  } catch(e) {
+    wrap.innerHTML = `<div class="center-msg" style="min-height:80px"><span style="color:#D33A3F">Error cargando activos: ${e.message}</span></div>`;
+  }
+}
+
+async function eliminarActivo(ticker) {
+  // Aviso extra si el activo sigue en la cartera actual
+  const enCartera = (state.holdings || []).some(h => h.ticker === ticker);
+  const msg = enCartera
+    ? `⚠ ${ticker} TODAVÍA ESTÁ EN LA CARTERA ACTUAL.\n\nSi lo eliminás, va a quedar sin tipo, categoría ni fuente de precio (se va a valuar al cierre del PDF, sin precio live).\n\n¿Eliminar igual?`
+    : `¿Eliminar ${ticker} del maestro de activos?\n\nSi vuelve a aparecer en un PDF futuro, se va a pedir cargarlo de nuevo.`;
+  if (!confirm(msg)) return;
+
+  try {
+    const r = await fetch(`${SB_URL}/${T_ACTIVOS}?ticker=eq.${encodeURIComponent(ticker)}`, {
+      method: 'DELETE',
+      headers: SB_HDR,
+    });
+    if (!r.ok && r.status !== 404) throw new Error('Error eliminando: ' + r.status + ' ' + await r.text());
+
+    // Limpiar meta en memoria (incluye alias por live_symbol)
+    const entry = state.meta[ticker];
+    delete state.meta[ticker];
+    if (entry?.liveSymbol && entry.liveSymbol !== ticker && state.meta[entry.liveSymbol] === entry) {
+      delete state.meta[entry.liveSymbol];
+    }
+    cargarActivosTabla();
+  } catch(e) {
+    alert('Error al eliminar: ' + e.message);
+  }
+}
+
+async function abrirEditarActivo(ticker) {
+  let a = {};
+  try {
+    const r = await fetch(`${SB_URL}/${T_ACTIVOS}?ticker=eq.${encodeURIComponent(ticker)}&select=*`, { headers: SB_HDR });
+    const arr = await r.json();
+    a = arr[0] || {};
+  } catch(e) {}
+
+  const TIPO_LISTA_ED = ['Caución ARS', 'Caución USD', 'CER', 'Commodities', 'Compra Call', 'Covered Call', 'Dual Tamar/CER', 'Equity Argentina', 'Equity USA', 'Futuro de Dólar', 'Money Market ARS', 'Money Market USD', 'ON DL', 'ON HD', 'Otros', 'Pagare ARS', 'Pagare USD', 'Short Equity', 'Short Renta Fija', 'Soberano DL', 'Soberano HD', 'Tamar', 'Tasa Fija ARS', 'Venta Call'];
+  const CAT_LISTA_ED  = ['CER', 'Commodities', 'Compra Call', 'Covered Call', 'Dual Tamar/CER', 'Equity', 'Futuro de Dólar', 'Liquidez', 'Renta Fija', 'Short Equity', 'Short Renta Fija', 'Tamar', 'Tasa Fija ARS', 'Venta Call'];
+  const FUENTE_LISTA_ED = Object.keys(FUENTE_KIND);
+
+  const tipoOpts = TIPO_LISTA_ED.map(t => `<option value="${t}" ${t===a.tipo_activo?'selected':''}>${t}</option>`).join('');
+  const catOpts  = CAT_LISTA_ED.map(c => `<option value="${c}" ${c===a.categoria?'selected':''}>${c}</option>`).join('');
+  const fOpts    = FUENTE_LISTA_ED.map(f => `<option value="${f}" ${f===a.fuente_precio?'selected':''}>${f}</option>`).join('');
+
+  showModal(`
+    <div class="modal-box" style="max-width:500px">
+      <div class="modal-header">
+        <div>
+          <div style="font-size:11px;color:#38BDF8;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Editar activo</div>
+          <div style="font-size:18px;font-weight:800">${ticker}</div>
+        </div>
+        <button onclick="closeModal()" style="background:none;border:none;color:#9A9AA0;cursor:pointer;font-size:18px">✕</button>
+      </div>
+      <div class="modal-body" style="display:grid;gap:12px">
+        <div>
+          <label style="font-size:11px;color:#5A5A60;font-weight:700;display:block;margin-bottom:5px">NOMBRE</label>
+          <input class="cms-input" id="ed-nom" value="${a.nombre || ''}" style="width:100%">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label style="font-size:11px;color:#5A5A60;font-weight:700;display:block;margin-bottom:5px">TIPO</label>
+            <select class="cms-select" id="ed-tip" style="width:100%">${tipoOpts}</select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#5A5A60;font-weight:700;display:block;margin-bottom:5px">CATEGORÍA</label>
+            <select class="cms-select" id="ed-cat" style="width:100%"><option value="">—</option>${catOpts}</select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label style="font-size:11px;color:#5A5A60;font-weight:700;display:block;margin-bottom:5px">MONEDA</label>
+            <select class="cms-select" id="ed-mon" style="width:100%">
+              <option value="ARS" ${a.moneda==='ARS'?'selected':''}>ARS</option>
+              <option value="USD" ${a.moneda==='USD'?'selected':''}>USD</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#5A5A60;font-weight:700;display:block;margin-bottom:5px">BASE</label>
+            <input class="cms-input" id="ed-bas" value="${a.base || ''}" placeholder="ej. 100" style="width:100%">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div>
+            <label style="font-size:11px;color:#5A5A60;font-weight:700;display:block;margin-bottom:5px">FUENTE PRECIO</label>
+            <select class="cms-select" id="ed-fue" style="width:100%">${fOpts}</select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#5A5A60;font-weight:700;display:block;margin-bottom:5px">LÁMINA</label>
+            <input class="cms-input" id="ed-lam" value="${a.lamina ?? 1}" placeholder="1" style="width:100%">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#5A5A60;font-weight:700;display:block;margin-bottom:5px">TNA %</label>
+            <input class="cms-input" id="ed-tas" value="${a.tasa ?? ''}" placeholder="—" style="width:100%">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px;color:#5A5A60;font-weight:700;display:block;margin-bottom:5px">LIVE SYMBOL</label>
+          <input class="cms-input" id="ed-sym" value="${a.live_symbol || ticker}" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:12px">
+        </div>
+        <div>
+          <label style="font-size:11px;color:#5A5A60;font-weight:700;display:block;margin-bottom:5px">PRECIO INICIAL (moneda del fondo)</label>
+          <input class="cms-input" id="ed-pi" value="${a.precio_inicial ?? ''}" placeholder="—" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:12px">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn-primary" onclick="guardarEditarActivo('${ticker}')">💾 Guardar</button>
+      </div>
+    </div>`);
+}
+
+async function guardarEditarActivo(ticker) {
+  const updates = {
+    nombre:        document.getElementById('ed-nom')?.value?.trim(),
+    tipo_activo:   document.getElementById('ed-tip')?.value,
+    categoria:     document.getElementById('ed-cat')?.value || null,
+    moneda:        document.getElementById('ed-mon')?.value,
+    fuente_precio: document.getElementById('ed-fue')?.value,
+    live_symbol:   document.getElementById('ed-sym')?.value?.trim(),
+    tasa:          parseFloat(document.getElementById('ed-tas')?.value) || null,
+    lamina:        parseFloat(document.getElementById('ed-lam')?.value) || 1,
+    base:           parseFloat(document.getElementById('ed-bas')?.value) || null,
+    precio_inicial: parseFloat(document.getElementById('ed-pi')?.value) || null,
+  };
+  try {
+    const r = await fetch(`${SB_URL}/${T_ACTIVOS}?ticker=eq.${encodeURIComponent(ticker)}`, {
+      method: 'PATCH',
+      headers: { ...SB_HDR, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(updates),
+    });
+    if (!r.ok) throw new Error(await r.text());
+    // Refrescar meta en memoria
+    const kind = FUENTE_KIND[updates.fuente_precio] || 'hold';
+    state.meta[ticker] = {
+      denom: updates.nombre || ticker, tipo: updates.tipo_activo, categoria: updates.categoria || '',
+      moneda: updates.moneda, fuente: updates.fuente_precio, kind,
+      liveSymbol: updates.live_symbol || ticker,
+      tasa: updates.tasa, lamina: updates.lamina || 1,
+      base: updates.base || 0, precioInicial: updates.precio_inicial,
+    };
+    closeModal();
+    cargarActivosTabla();
+  } catch(e) {
+    alert('Error guardando: ' + e.message);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
