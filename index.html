@@ -1127,16 +1127,16 @@ function renderFondo() {
           <input id="flt-ticker" oninput="filtrarHoldings()" placeholder="Buscar ticker…"
             style="width:100%;box-sizing:border-box;padding:7px 10px 7px 30px;background:#1A1A20;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#E5E5E7;font-size:12px;font-family:inherit;outline:none">
         </div>
-        <select id="flt-tipo" onchange="filtrarHoldings()"
-          style="padding:7px 10px;background:#1A1A20;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#E5E5E7;font-size:12px;font-family:inherit;outline:none;cursor:pointer">
-          <option value="">Todos los tipos</option>
-          ${tiposUnicos.map(t => `<option value="${t}">${t}</option>`).join('')}
-        </select>
-        <select id="flt-cat" onchange="filtrarHoldings()"
-          style="padding:7px 10px;background:#1A1A20;border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#E5E5E7;font-size:12px;font-family:inherit;outline:none;cursor:pointer">
-          <option value="">Todas las categorías</option>
-          ${catsUnicas.map(c => `<option value="${c}">${c}</option>`).join('')}
-        </select>
+        ${tiposUnicos.length > 0 ? `
+        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+          <span style="color:#5A5A60;font-size:11px;font-weight:600;white-space:nowrap">Tipo:</span>
+          ${tiposUnicos.map(t => `<button class="flt-chip flt-chip-tipo" data-val="${t}" onclick="toggleFltChip(this)">${t}</button>`).join('')}
+        </div>` : ''}
+        ${catsUnicas.length > 0 ? `
+        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+          <span style="color:#5A5A60;font-size:11px;font-weight:600;white-space:nowrap">Cat:</span>
+          ${catsUnicas.map(c => `<button class="flt-chip flt-chip-cat" data-val="${c}" onclick="toggleFltChip(this)">${c}</button>`).join('')}
+        </div>` : ''}
       </div>
 
       <div class="table-wrap">
@@ -1181,14 +1181,19 @@ function renderFondo() {
 }
 
 // ── FILTRO DE HOLDINGS ───────────────────────────────────────────────
+function toggleFltChip(btn) {
+  btn.classList.toggle('active');
+  filtrarHoldings();
+}
+
 function filtrarHoldings() {
-  const ticker = (document.getElementById('flt-ticker')?.value || '').toLowerCase().trim();
-  const tipo   = document.getElementById('flt-tipo')?.value  || '';
-  const cat    = document.getElementById('flt-cat')?.value   || '';
+  const ticker     = (document.getElementById('flt-ticker')?.value || '').toLowerCase().trim();
+  const tiposActivos = new Set([...document.querySelectorAll('.flt-chip-tipo.active')].map(b => b.dataset.val));
+  const catsActivas  = new Set([...document.querySelectorAll('.flt-chip-cat.active')].map(b => b.dataset.val));
   document.querySelectorAll('tr.holding-row').forEach(tr => {
     const okTicker = !ticker || tr.dataset.ticker.includes(ticker);
-    const okTipo   = !tipo   || tr.dataset.tipo === tipo;
-    const okCat    = !cat    || tr.dataset.cat  === cat;
+    const okTipo   = tiposActivos.size === 0 || tiposActivos.has(tr.dataset.tipo);
+    const okCat    = catsActivas.size  === 0 || catsActivas.has(tr.dataset.cat);
     tr.style.display = (okTicker && okTipo && okCat) ? '' : 'none';
   });
 }
