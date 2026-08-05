@@ -326,6 +326,25 @@
   }
   .upload-btn:hover { background: rgba(255,255,255,0.10); }
 
+  .export-opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: #D4D4D8;
+    padding: 8px 12px;
+    border-radius: 7px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s;
+  }
+  .export-opt:hover { background: rgba(255,255,255,0.08); }
+
     .ms-wrap { position:relative; display:inline-block; }
     .ms-btn {
       display:flex; align-items:center; gap:6px;
@@ -698,8 +717,25 @@ async function cargarFxAyer() {
   }
 }
 
+// ── VENTANA DE ACTUALIZACIÓN: lun–vie 9:00–17:20 (hora Argentina) ──
+const HORARIO_DESDE = 9 * 60;        // 09:00
+const HORARIO_HASTA = 17 * 60 + 20;  // 17:20
+
+function dentroHorarioMercado() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    hour12: false, weekday: 'short', hour: '2-digit', minute: '2-digit',
+  }).formatToParts(new Date());
+  const get = t => parts.find(p => p.type === t)?.value || '';
+  const wd = get('weekday');
+  if (wd === 'Sat' || wd === 'Sun') return false;
+  const mins = (parseInt(get('hour'), 10) % 24) * 60 + parseInt(get('minute'), 10);
+  return mins >= HORARIO_DESDE && mins <= HORARIO_HASTA;
+}
+
 async function actualizarPrecios() {
   if (state.updatingPrices) return;
+  if (!dentroHorarioMercado()) { render(); return; }
   state.updatingPrices = true;
   render();
   try {
@@ -992,6 +1028,7 @@ function renderFondo() {
   const moneda    = FUND.moneda || 'ARS';
   const neg = rend < -1e-5;
   const rendColor = neg ? '#D33A3F' : '#2E9E2A'; // verde si ≥ 0, rojo si negativo
+  const enHorario = dentroHorarioMercado();
 
   const tiposUnicos  = [...new Set(holdings.map(h => fondoMeta[h.ticker]?.tipo).filter(Boolean))].sort();
   const catsUnicas   = [...new Set(holdings.map(h => fondoMeta[h.ticker]?.categoria).filter(Boolean))].sort();
@@ -1134,9 +1171,11 @@ function renderFondo() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
           Activos
         </button>
-        <button onclick="actualizarPrecios()" class="upload-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);${state.updatingPrices ? 'opacity:0.5;cursor:not-allowed' : ''}">
+        <button ${enHorario && !state.updatingPrices ? 'onclick="actualizarPrecios()"' : 'disabled'} class="upload-btn"
+          title="${enHorario ? 'Actualizar precios ahora' : 'Actualización disponible de lunes a viernes de 9:00 a 17:20'}"
+          style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);${(state.updatingPrices || !enHorario) ? 'opacity:0.45;cursor:not-allowed' : ''}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="${state.updatingPrices ? 'animation:spin 1s linear infinite' : ''}"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          ${state.updatingPrices ? 'Actualizando…' : 'Actualizar precios'}
+          ${state.updatingPrices ? 'Actualizando…' : (enHorario ? 'Actualizar precios' : 'Fuera de horario (9:00–17:20)')}
           ${state.lastPriceUpdate ? `<span style="font-size:10px;opacity:0.5;margin-left:4px">${state.lastPriceUpdate.toLocaleTimeString('es-AR', {hour:'2-digit',minute:'2-digit'})}</span>` : ''}
         </button>
         <button onclick="abrirCorteCupon()" class="upload-btn" style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);color:#F59E0B">
@@ -1147,6 +1186,23 @@ function renderFondo() {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
           Cargar PDF
         </label>
+        <div style="position:relative">
+          <button onclick="toggleExportMenu(event)" class="upload-btn" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="export-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#1A1A20;border:1px solid rgba(255,255,255,0.14);border-radius:10px;padding:5px;z-index:60;min-width:170px;box-shadow:0 10px 30px rgba(0,0,0,0.55)">
+            <button onclick="exportarExcel()" class="export-opt">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13l6 6M15 13l-6 6"/></svg>
+              Excel (.xlsx)
+            </button>
+            <button onclick="exportarPDF()" class="export-opt">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+              PDF
+            </button>
+          </div>
+        </div>
         </div><!-- end right buttons -->
       </div><!-- end toolbar -->
 
@@ -1314,6 +1370,255 @@ function bindEvents() {
 // INIT
 // ═══════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════
+// EXPORTAR CARTERA (EXCEL / PDF)
+// ═══════════════════════════════════════════════════════════════════
+
+function toggleExportMenu(ev) {
+  ev.stopPropagation();
+  const m = document.getElementById('export-menu');
+  if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+
+document.addEventListener('click', () => {
+  const m = document.getElementById('export-menu');
+  if (m && m.style.display !== 'none') m.style.display = 'none';
+});
+
+function cerrarExportMenu() {
+  const m = document.getElementById('export-menu');
+  if (m) m.style.display = 'none';
+}
+
+// Carga diferida de SheetJS (solo cuando se exporta a Excel)
+let _xlsxPromise = null;
+function cargarXLSX() {
+  if (window.XLSX) return Promise.resolve();
+  if (_xlsxPromise) return _xlsxPromise;
+  _xlsxPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload  = () => resolve();
+    s.onerror = () => { _xlsxPromise = null; reject(new Error('No se pudo cargar la librería de Excel')); };
+    document.head.appendChild(s);
+  });
+  return _xlsxPromise;
+}
+
+function fechaArgStr() {
+  return new Date().toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+function fechaArgISO() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }); // YYYY-MM-DD
+}
+
+// Misma lógica de filas que la tabla del fondo (incl. cortes de cupón), en valores numéricos
+function calcFilasExport() {
+  if (!FUND) return null;
+  const { navLive, rend, pn, totalInv, honorario } = calcNAV();
+  injectCorteMeta();
+  const holdings  = getHoldingsConCortes();
+  const fondoMeta = state.meta || {};
+  const moneda    = FUND.moneda || 'ARS';
+
+  const montosAjust    = calcMontosCartera();
+  const montosMap      = Object.fromEntries(montosAjust.map(i => [i.ticker, i.montoDisplay]));
+  const montosTablaMap = Object.fromEntries(montosAjust.map(i => [i.ticker, i.montoTabla]));
+
+  const filas = [];
+  for (const h of holdings) {
+    // Fila especial: corte de cupón
+    if (h._esCupon) {
+      const c = h._corte;
+      filas.push({
+        esCupon: true,
+        ticker: 'CUPÓN',
+        instrumento: (c.descripcion || 'Corte de cupón') + (c.moneda !== moneda ? ' (' + c.moneda + ' ' + fNum(c.monto) + ')' : ''),
+        nominales: null, cierre: null, actual: null, live: null,
+        varPct: null, varHist: null, monto: h.cierre,
+        pctPN: pn > 0 ? h.cierre / pn : null, moneda: moneda,
+      });
+      continue;
+    }
+
+    const meta        = fondoMeta[h.ticker];
+    const instrMoneda = meta?.moneda || 'ARS';
+    const { price, live } = calcPrecio(h, meta, moneda, state.fxLive, state.fxAyer, state.marketMap, state.usMap, state.canje, state.yahooMap);
+    const lamina  = meta?.lamina || 1;
+    const cierre  = h.cierre * lamina;
+    const tipo    = meta?.tipo || 'Otros';
+    const isShortCall  = ['Covered Call', 'Venta Call'].includes(tipo);
+    const priceDisplay = live ? price : cierre;
+    const varPct  = live && cierre > 0
+      ? (isShortCall ? cierre / price - 1 : price / cierre - 1)
+      : 0;
+    const precioInicial = meta?.precioInicial ?? null;
+    const varHist = precioInicial > 0
+      ? (isShortCall ? precioInicial / priceDisplay - 1 : priceDisplay / precioInicial - 1)
+      : null;
+    const monto        = h.cantidad * (price / lamina);
+    const montoDisplay = montosMap[h.ticker]      ?? monto;
+    const montoTabla   = montosTablaMap[h.ticker] ?? monto;
+
+    filas.push({
+      ticker: h.ticker,
+      instrumento: meta?.denom || h.ticker,
+      nominales: h.cantidad, cierre, actual: priceDisplay, live,
+      varPct, varHist, monto: montoTabla,
+      pctPN: pn > 0 ? montoDisplay / pn : null, moneda: instrMoneda,
+    });
+  }
+
+  const ajustes = (AJUSTES || []).map(a => ({ label: a.label, val: a.val }));
+  return { cfg: FUND, moneda, filas, totalInv, ajustes, honorario, pn, navLive, rend };
+}
+
+async function exportarExcel() {
+  cerrarExportMenu();
+  const d = calcFilasExport();
+  if (!d) return;
+  try {
+    await cargarXLSX();
+  } catch (e) {
+    alert('No se pudo cargar la librería de Excel. Revisá la conexión a internet.');
+    return;
+  }
+
+  const aoa = [];
+  aoa.push([d.cfg.nombre + ' — Composición de cartera']);
+  aoa.push(['Fecha', fechaArgStr(), '', 'NAV live', d.navLive, '', 'PN live (' + d.moneda + ')', d.pn]);
+  aoa.push([]);
+  const HEADER_ROW = 3; // índice (0-based) de la fila de encabezados
+  aoa.push(['Ticker', 'Instrumento', 'Nominales', 'Px cierre', 'Px actual', 'Estado', 'Var %', 'Var Hist.', 'Monto ' + d.moneda, '% Patrim.', 'Moneda instr.']);
+  for (const f of d.filas) {
+    aoa.push([
+      f.ticker, f.instrumento,
+      f.nominales ?? '', f.cierre ?? '', f.actual ?? '',
+      f.esCupon ? '' : (f.live ? 'LIVE' : 'CIERRE'),
+      f.varPct ?? '', f.varHist ?? '', f.monto, f.pctPN ?? '', f.moneda,
+    ]);
+  }
+  aoa.push([]);
+  aoa.push(['SUBTOTAL CARTERA', '', '', '', '', '', '', '', d.totalInv]);
+  for (const a of d.ajustes) aoa.push([a.label, '', '', '', '', '', '', '', a.val]);
+  aoa.push(['(−) Honorarios devengados (1 día)', '', '', '', '', '', '', '', -d.honorario]);
+  aoa.push(['PATRIMONIO NETO LIVE', '', '', '', '', '', '', '', d.pn]);
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [
+    { wch: 16 }, { wch: 40 }, { wch: 14 }, { wch: 12 }, { wch: 12 },
+    { wch: 9 },  { wch: 10 }, { wch: 10 }, { wch: 18 }, { wch: 10 }, { wch: 13 },
+  ];
+  // Formatos numéricos
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let R = HEADER_ROW + 1; R <= range.e.r; R++) {
+    const setFmt = (c, z) => {
+      const cell = ws[XLSX.utils.encode_cell({ r: R, c })];
+      if (cell && typeof cell.v === 'number') cell.z = z;
+    };
+    setFmt(2, '#,##0');       // Nominales
+    setFmt(3, '#,##0.00');    // Px cierre
+    setFmt(4, '#,##0.00');    // Px actual
+    setFmt(6, '+0.00%;-0.00%;0.00%');  // Var %
+    setFmt(7, '+0.00%;-0.00%;0.00%');  // Var Hist.
+    setFmt(8, '#,##0');       // Monto
+    setFmt(9, '0.00%');       // % Patrim.
+  }
+  // NAV y PN del encabezado
+  const c5 = ws[XLSX.utils.encode_cell({ r: 1, c: 4 })]; if (c5) c5.z = '#,##0.0000';
+  const c8 = ws[XLSX.utils.encode_cell({ r: 1, c: 7 })]; if (c8) c8.z = '#,##0';
+
+  const wb = XLSX.utils.book_new();
+  const sheetName = String(d.cfg.nombre || FUND_ID).replace(/[\\\/\?\*\[\]:]/g, '').slice(0, 31) || 'Cartera';
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, `${FUND_ID}_cartera_${fechaArgISO()}.xlsx`);
+}
+
+function exportarPDF() {
+  cerrarExportMenu();
+  const d = calcFilasExport();
+  if (!d) return;
+
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const pctStr = v => v === null || v === undefined || v === '' ? '—' : fPct(v);
+  const pnPctStr = v => v === null ? '—' : (v * 100).toFixed(2) + '%';
+  const numStr = (v, fmt) => v === null || v === undefined ? '—' : fmt(v);
+
+  const filasH = d.filas.map(f => {
+    const varColor  = f.varPct === null || Math.abs(f.varPct) < 1e-9 ? '#6B7280' : (f.varPct > 0 ? '#15803D' : '#B91C1C');
+    const histColor = f.varHist === null || Math.abs(f.varHist) < 1e-9 ? '#6B7280' : (f.varHist > 0 ? '#15803D' : '#B91C1C');
+    return '<tr>'
+      + '<td class="tk">' + esc(f.ticker) + '</td>'
+      + '<td class="in">' + esc(f.instrumento) + '</td>'
+      + '<td class="num">' + numStr(f.nominales, fNum) + '</td>'
+      + '<td class="num">' + numStr(f.cierre, f2) + '</td>'
+      + '<td class="num">' + numStr(f.actual, f2) + (f.esCupon ? '' : ' <span class="bdg">' + (f.live ? 'LIVE' : 'CIERRE') + '</span>') + '</td>'
+      + '<td class="num" style="color:' + varColor + '">' + pctStr(f.varPct) + '</td>'
+      + '<td class="num" style="color:' + histColor + '">' + pctStr(f.varHist) + '</td>'
+      + '<td class="num">' + fARS(f.monto) + '</td>'
+      + '<td class="num">' + pnPctStr(f.pctPN) + '</td>'
+      + '<td>' + esc(f.moneda) + '</td>'
+      + '</tr>';
+  }).join('');
+
+  const totRow = (label, val, strong) => '<tr class="tot' + (strong ? ' strong' : '') + '">'
+    + '<td colspan="7">' + esc(label) + '</td>'
+    + '<td class="num">' + fARS(val) + '</td><td></td><td></td></tr>';
+
+  let totalesH = totRow('SUBTOTAL CARTERA', d.totalInv);
+  for (const a of d.ajustes) totalesH += totRow(a.label, a.val);
+  totalesH += totRow('(−) Honorarios devengados (1 día)', -d.honorario);
+  totalesH += totRow('PATRIMONIO NETO LIVE', d.pn, true);
+
+  const html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+    + '<title>' + esc(d.cfg.nombre) + ' — Cartera ' + fechaArgStr() + '</title>'
+    + '<style>'
+    + "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');"
+    + '* { margin:0; padding:0; box-sizing:border-box; }'
+    + 'body { font-family:\'Inter\',sans-serif; background:#FFF; color:#111827; padding:26px 30px; }'
+    + '.hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }'
+    + '.hdr .nm { font-size:17px; font-weight:800; }'
+    + '.hdr .dt { font-size:11px; color:#6B7280; }'
+    + '.sub { font-size:11px; color:#6B7280; margin-bottom:14px; }'
+    + '.kpis { display:flex; gap:26px; margin-bottom:16px; }'
+    + '.kpis .k { font-size:10px; text-transform:uppercase; letter-spacing:0.5px; color:#6B7280; }'
+    + '.kpis .v { font-size:14px; font-weight:800; }'
+    + 'table { width:100%; border-collapse:collapse; font-size:9.5px; }'
+    + 'th { text-align:left; font-size:8.5px; text-transform:uppercase; letter-spacing:0.4px; color:#4B5563; border-bottom:1.5px solid #D1D5DB; padding:4px 5px; }'
+    + 'th.num { text-align:right; }'
+    + 'td { padding:3.5px 5px; border-bottom:1px solid #F3F4F6; }'
+    + 'td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }'
+    + 'td.tk { font-weight:700; white-space:nowrap; }'
+    + 'td.in { color:#374151; }'
+    + '.bdg { font-size:7px; font-weight:700; color:#6B7280; border:1px solid #D1D5DB; border-radius:3px; padding:0.5px 3px; vertical-align:middle; }'
+    + 'tr.tot td { border-top:1.5px solid #D1D5DB; border-bottom:none; font-weight:700; padding-top:5px; }'
+    + 'tr.tot.strong td { color:#15803D; font-size:10.5px; }'
+    + '.ftr { margin-top:14px; display:flex; justify-content:space-between; font-size:8.5px; color:#9CA3AF; }'
+    + '@media print { body { padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; } @page { size:A4 landscape; margin:10mm 11mm; } thead { display:table-header-group; } tr { break-inside:avoid; } }'
+    + '</style></head><body>'
+    + '<div class="hdr"><div class="nm">' + esc(d.cfg.nombre) + ' · Composición de cartera</div><div class="dt">' + fechaArgStr() + '</div></div>'
+    + '<div class="sub">FCI ' + esc(d.cfg.nombre) + ' · ' + (d.moneda === 'USD' ? 'Dólares' : 'Pesos') + ' · Documento informativo</div>'
+    + '<div class="kpis">'
+    + '<div><div class="k">NAV live</div><div class="v">' + f4(d.navLive) + '</div></div>'
+    + '<div><div class="k">Rendimiento</div><div class="v">' + fPct(d.rend) + '</div></div>'
+    + '<div><div class="k">PN live (' + d.moneda + ')</div><div class="v">' + fARS(d.pn) + '</div></div>'
+    + '</div>'
+    + '<table><thead><tr>'
+    + '<th>Ticker</th><th>Instrumento</th><th class="num">Nominales</th><th class="num">Px cierre</th><th class="num">Px actual</th>'
+    + '<th class="num">Var %</th><th class="num">Var Hist.</th><th class="num">Monto ' + d.moneda + '</th><th class="num">% Patrim.</th><th>Moneda</th>'
+    + '</tr></thead><tbody>'
+    + filasH + totalesH
+    + '</tbody></table>'
+    + '<div class="ftr"><div>' + esc(d.cfg.nombre) + '</div><div>Composición al ' + fechaArgStr() + ' · Guardar como PDF desde el diálogo de impresión</div></div>'
+    + '<script>window.addEventListener("load",()=>setTimeout(()=>window.print(),400));<\/script>'
+    + '</body></html>';
+
+  const w = window.open('', '_blank', 'width=1150,height=850');
+  if (!w) { alert('Bloqueado por el navegador. Permití ventanas emergentes para este sitio.'); return; }
+  w.document.write(html);
+  w.document.close();
+}
+
 async function init() {
   render(); // pantalla de carga
 
@@ -1334,16 +1639,19 @@ async function init() {
     await cargarCortesCupon();
     render();
 
-    const live = await fetchLivePrecios();
-    state.fxLive          = live.fxLive;
-    state.canje           = live.canje;
-    state.marketMap       = live.marketMap;
-    state.usMap           = live.usMap;
-    state.yahooMap        = live.yahooMap || {};
-    state.lastPriceUpdate = new Date();
+    if (dentroHorarioMercado()) {
+      const live = await fetchLivePrecios();
+      state.fxLive          = live.fxLive;
+      state.canje           = live.canje;
+      state.marketMap       = live.marketMap;
+      state.usMap           = live.usMap;
+      state.yahooMap        = live.yahooMap || {};
+      state.lastPriceUpdate = new Date();
+    }
     render();
 
     setInterval(async () => {
+      if (!dentroHorarioMercado()) { render(); return; }
       const live = await fetchLivePrecios();
       state.fxLive          = live.fxLive;
       state.canje           = live.canje;
